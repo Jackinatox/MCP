@@ -1,5 +1,6 @@
 package com.scyed.mcp
 
+import com.github.dockerjava.api.model.Info
 import com.scyed.mcp.docker.Provisioning
 import com.scyed.mcp.docker.ServerConfig
 import jakarta.validation.Valid
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import java.util.function.Consumer
 
-//@RestController
+@RestController
 class TestController {
     private final val provisioning: Provisioning
 
@@ -23,10 +24,9 @@ class TestController {
         this.provisioning = provisioning
     }
 
-    @PostMapping("/")
-    fun index(@Valid @RequestBody test: ServerConfig): String {
-        val result: String = provisioning.createSerevr(test)
-        return result
+    @RequestMapping("/")
+    fun index(): Info {
+        return provisioning.getStatus()
     }
 
 

@@ -1,5 +1,7 @@
 package com.scyed.mcp.jpa
 
+import jakarta.persistence.Column
+import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -17,6 +19,9 @@ class Server(
     var skip_scripts: Boolean = false,
     var memoryMb: Long,
     var cpuPercent: Int,
+    @Column(columnDefinition = "TEXT") // or JSON if your DB supports it
+    @Convert(converter = EnvMapConverter::class)
+    var env: Map<String, String> = emptyMap()
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
