@@ -38,3 +38,6 @@ out/
 
 ### Kotlin ###
 .kotlin
+/database.lock.db
+/database.mv.db
+/database.trace.db
