@@ -14,11 +14,12 @@ import java.util.UUID
 class Server(
     var name: String,
     var description: String?,
+    var containerId: String?,
     var image: String = "",
     @Enumerated(EnumType.STRING) var status: ServerStatus = ServerStatus.PROVISIONING,
     var skip_scripts: Boolean = false,
     var memoryMb: Long,
-    var cpuPercent: Int,
+    var cpuPercent: Long,
     @Column(columnDefinition = "TEXT") // or JSON if your DB supports it
     @Convert(converter = EnvMapConverter::class)
     var env: Map<String, String> = emptyMap()

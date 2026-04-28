@@ -1,12 +1,15 @@
 package com.scyed.mcp.docker
 
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Info
 import com.github.dockerjava.core.DefaultDockerClientConfig
 import com.github.dockerjava.core.DockerClientConfig
 import com.github.dockerjava.core.DockerClientImpl
 import com.github.dockerjava.httpclient5.ApacheDockerHttpClient
 import com.github.dockerjava.transport.DockerHttpClient
+import com.scyed.mcp.game.Glyph
 import org.springframework.stereotype.Service
 import java.time.Duration
 
@@ -29,9 +32,12 @@ class DockerProvisioningService : Provisioning {
         docker.pingCmd().exec()
     }
 
-    override fun createSerevr(test: ServerConfig): String {
-        System.out.println(test)
-        return test.toString()
+    override fun createServer(serverConfig: ServerConfig): String {
+        return "Dummy";
+    }
+
+    override fun reinstallServer(serverId: String) {
+        TODO("Not yet implemented")
     }
 
     override fun getStatus(): Info {

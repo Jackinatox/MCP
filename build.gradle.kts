@@ -30,6 +30,7 @@ dependencies {
     implementation("com.github.docker-java:docker-java-core:3.7.1")
     // Source: https://mvnrepository.com/artifact/com.github.docker-java/docker-java-transport-httpclient5
     implementation("com.github.docker-java:docker-java-transport-httpclient5:3.7.1")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
