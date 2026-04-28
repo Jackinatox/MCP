@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError
 import org.springframework.validation.ObjectError
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -17,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController
 import java.util.function.Consumer
 
 @RestController
+@RequestMapping("/", "v1")
 class TestController {
     private final val provisioning: Provisioning
 
     constructor(provisioning: Provisioning) {
         this.provisioning = provisioning
     }
-
-    @RequestMapping("/")
+    @GetMapping
     fun index(): Info {
         return provisioning.getStatus()
     }
