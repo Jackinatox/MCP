@@ -16,8 +16,8 @@ class DockerProvisioningService : Provisioning {
     private final val docker: DockerClient
 
     constructor() {
-        val config: DockerClientConfig? =
-            DefaultDockerClientConfig.createDefaultConfigBuilder().withDockerHost("unix:///var/run/docker.sock").build()
+        // Get config based of environment
+        val config = DefaultDockerClientConfig.createDefaultConfigBuilder().build()
 
         val httpClient: DockerHttpClient = ApacheDockerHttpClient.Builder().dockerHost(config!!.getDockerHost())
             .sslConfig(config.getSSLConfig()) // null for unix socket, that's fine
