@@ -1,6 +1,7 @@
 package com.scyed.mcp.docker
 
 import com.github.dockerjava.api.DockerClient
+import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
@@ -40,13 +41,16 @@ class ServerProvisioner(
     private val properties: GameserverProperties,
     private val glyphProvider: GlyphProvider
 ) {
+    private final val installScriptName = "install.sh"
+    private final val gameserverPathInContainer = "/mnt/server"
+    private final val installScriptPathInContainer = "/mnt/installScript"
     private val log = LoggerFactory.getLogger(javaClass)
 
     @Async("provisioningExecutor")
     @EventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun onProvisioningRequest(event: ServerProvisioningRequested) {
-        val server = serverRepository.findById(event.serverId).orElseThrow()
+    fun reInstallServer(event: ServerProvisioningRequested) {
+        var server = serverRepository.findById(event.serverId).orElseThrow()
         val test = glyphProvider.getAll();
         val glyph = requireNotNull(glyphProvider.getById("egg"))
         log.info("Provisioning request for ${server.id}")
@@ -56,19 +60,30 @@ class ServerProvisioner(
                 docker.createContainerCmd(glyph.scripts.installation.container).withName(server.name).withHostConfig(
                     HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
                         .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
+                        .withAutoRemove(true)
                         .withBinds(
                             Binds(
                                 Bind(
-                                    installScript.toString(), Volume("/gameserver/install.sh")
-                                )
+                                    installScript.toString(), Volume("$installScriptPathInContainer/$installScriptName")
+                                ), gameFiles(server.id.toString())
                             )
                         )
-                ).withCmd("bash", "/gameserver/install.sh").exec()
+                ).withCmd("bash", "$installScriptPathInContainer/$installScriptName").exec()
 
             server.containerId = container.id
-            server.status = ServerStatus.STOPPED
-            serverRepository.save(server)
+            server.status = ServerStatus.INSTALLING
+            server = serverRepository.save(server)
 
+            val callback: WaitContainerResultCallback = WaitContainerResultCallback()
+            log.info("Started Conatiner: ${server.containerId}")
+            docker.startContainerCmd(container.id).exec();
+            docker.waitContainerCmd(container.id).exec(callback);
+            log.debug("Waiting for install to finish: ${server.containerId}")
+            callback.awaitStatusCode()
+            log.info("Installer finised")
+
+            server.status = ServerStatus.IDLE
+            server = serverRepository.save(server)
 
         } catch (e: Exception) {
             log.error("Provisioning failed for server ${server.id}", e)
@@ -84,16 +99,20 @@ class ServerProvisioner(
         Files.createDirectories(installDirectory)
         log.info("Created Installer Folder structure $installDirectory")
 
-        val installScript = installDirectory.resolve("install.sh")
-
-        log.info("Creating Script: $script")
+        val installScript = installDirectory.resolve(installScriptName)
 
         Files.writeString(installScript, script)
-        log.info("Created: $installScript")
+        log.info("Wrote InstallScript: $installScript")
         return installScript
+    }
+
+    private fun gameFiles(containerId: String): Bind {
+        return Bind(
+            properties.gameserverStorage.toAbsolutePath().resolve(containerId, "gameFiles").normalize().toString(),
+            Volume(gameserverPathInContainer)
+        )
     }
 
 
     data class ServerProvisioningRequested(val serverId: UUID)
-
 }

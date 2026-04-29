@@ -2,8 +2,8 @@ package com.scyed.mcp
 
 import com.scyed.mcp.docker.ServerProvisioner
 import com.scyed.mcp.jpa.ServerEntity
-import com.scyed.mcp.jpa.ServerStatus
 import com.scyed.mcp.jpa.ServerRepository
+import com.scyed.mcp.jpa.ServerStatus
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -50,7 +50,7 @@ class ServerController {
                 request.cpuPercent,
                 request.env
             )
-        );
+        )
 
         log.info("Creating server ${server.name} and id: ${server.id}")
 
@@ -58,16 +58,16 @@ class ServerController {
             ServerProvisioner.ServerProvisioningRequested(
                 requireNotNull(server.id) { "Server ID was null after save" })
         )
-        return server;
+        return server
     }
 
     data class CreateServerRequest(
         @NotBlank val name: String,
         @NotBlank val imageName: String,
         val description: String? = null,
-        @NotNull val cpuPercent: Long,
-        @NotNull val memoryMb: Long,
-        @NotNull val env: Map<String, String> = emptyMap()
+        @NotNull var cpuPercent: Long,
+        @NotNull var memoryMb: Long,
+        @NotNull var env: Map<String, String> = emptyMap()
     )
 
     data class ServerResponse(
