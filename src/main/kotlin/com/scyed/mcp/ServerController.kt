@@ -25,14 +25,19 @@ class ServerController {
     private final val serverRepository: ServerRepository
     private final val eventPublisher: ApplicationEventPublisher
     private final val glyphRepository: GlyphRepository
+    private final val provisioner: ServerProvisioner
     private val log = LoggerFactory.getLogger(javaClass)
 
     constructor(
-        servers: ServerRepository, eventPublisher: ApplicationEventPublisher, glyphRepository: GlyphRepository
+        servers: ServerRepository,
+        eventPublisher: ApplicationEventPublisher,
+        glyphRepository: GlyphRepository,
+        provisioner: ServerProvisioner
     ) {
         this.serverRepository = servers
         this.eventPublisher = eventPublisher
         this.glyphRepository = glyphRepository
+        this.provisioner = provisioner
     }
 
     @RequestMapping
@@ -73,31 +78,31 @@ class ServerController {
     }
 
     @PostMapping("{serverId}/reinstall")
-    fun reinstall(@RequestBody @Valid request: ReinstallServerRequest, @PathVariable serverId: UUID) {
+    fun reinstall(
+        @RequestBody @Valid request: ReinstallServerRequest, @PathVariable serverId: UUID
+    ): ReinstallServerResponse {
         val server = serverRepository.findById(serverId).orElseThrow() {
             throw ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Server with ID $serverId not found"
+                HttpStatus.NOT_FOUND, "Server with ID $serverId not found"
             )
         }
 
         if (!request.forceStop && server.status != ServerStatus.STOPPED) {
             throw ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "Server must be stopped to reinstall or use forceStop=true"
+                HttpStatus.BAD_REQUEST, "Server must be stopped to reinstall or use forceStop=true"
             )
         } else {
-            eventPublisher.publishEvent(
-                ServerProvisioner.KillServerRequested(server)
-            )
+            provisioner.killServer(ServerProvisioner.KillServerRequested(server))
         }
-        
+
 
         log.info("Reinstalling server $serverId Request: $request")
 
         eventPublisher.publishEvent(
             ServerProvisioner.ServerReinstallRequested(serverId)
         )
+
+        return ReinstallServerResponse(serverId, ServerStatus.INSTALLING)
     }
 
 
@@ -112,9 +117,10 @@ class ServerController {
     )
 
     data class ReinstallServerRequest(
-        val deleteFiles: Boolean = false,
-        val forceStop: Boolean = false
+        val deleteFiles: Boolean = false, val forceStop: Boolean = false
     )
+
+    data class ReinstallServerResponse(val id: UUID, val status: ServerStatus)
 
     data class ServerResponse(
         val count: Long, val servers: List<ServerEntity>

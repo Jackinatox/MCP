@@ -3,7 +3,6 @@ package com.scyed.mcp.docker
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.exception.ConflictException
-import com.github.dockerjava.api.exception.DockerException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
@@ -107,17 +106,23 @@ class ServerProvisioner(
         return installScript
     }
 
-    @EventListener
-    public fun stopServer(event: KillServerRequested) {
+    public fun killServer(event: KillServerRequested) {
         if (event.server.containerId != null) {
             log.info("Killing and removing container ${event.server.containerId}")
             try {
                 docker.killContainerCmd(event.server.containerId!!).exec();
+                log.info("Killed container ${event.server.containerId}")
+                Thread.sleep(1000)
             } catch (e: ConflictException) {
-                log.warn("Failed to kill container ${event.server.containerId}: ${e.message}")
+                log.error("Failed to kill container ${event.server.containerId}: ${e.message}")
             }
-            docker.removeContainerCmd(event.server.containerId!!).exec();
-            log.info("Killed and removed container ${event.server.containerId}")
+            try {
+                docker.removeContainerCmd(event.server.containerId!!).exec();
+            } catch (e: Exception) {
+                log.error("Failed to remove container ${event.server.containerId}: ${e.message}")
+            }
+            Thread.sleep(1000)
+            log.info("Removed container ${event.server.containerId}")
             event.server.containerId = null
             event.server.status = ServerStatus.STOPPED
 
