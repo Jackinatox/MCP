@@ -8,7 +8,10 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.UniqueConstraint
+import jdk.internal.org.commonmark.internal.Bracket.image
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.time.Instant
@@ -28,6 +31,10 @@ class ServerEntity(
     @Column(columnDefinition = "TEXT") // or JSON if your DB supports it
     @Convert(converter = EnvMapConverter::class)
     var env: Map<String, String> = emptyMap(),
+
+    @ManyToOne()
+    var glyphEntity: GlyphEntity,
+
     @CreationTimestamp
     var createdAt: Instant = Instant.now(),
     @UpdateTimestamp

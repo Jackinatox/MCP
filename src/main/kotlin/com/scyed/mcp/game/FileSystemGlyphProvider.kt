@@ -1,5 +1,7 @@
 package com.scyed.mcp.game
 
+import com.scyed.mcp.jpa.repositories.GlyphRepository
+import com.scyed.mcp.jpa.repositories.toEntity
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -43,7 +45,7 @@ class EggConfigurationFS
  */
 @Component
 class FileSystemGlyphProvider(
-    private val properties: EggProperties,
+    private val properties: EggProperties, private val glyphRepository: GlyphRepository
 ) : GlyphProvider {
     private val log = LoggerFactory.getLogger(javaClass)
     private val objectMapper: ObjectMapper = jacksonObjectMapper()
@@ -63,14 +65,22 @@ class FileSystemGlyphProvider(
     private fun load(): Map<String, Glyph> {
         val dir = properties.directory
         log.info("Loading eggs from ${dir.toAbsolutePath()}")
+
         if (!Files.isDirectory(dir)) {
             log.warn("Egg directory {} does not exist; no eggs loaded", dir.toAbsolutePath())
             return emptyMap()
         }
-        return Files.list(dir).use { stream ->
-            stream.filter { it.extension.equals("json", ignoreCase = true) }.toList().mapNotNull(::tryLoad).toMap()
-                .also { log.info("Loaded {} glyph(s) from {}", it.size, dir.toAbsolutePath()) }
+        val files = Files.list(dir).use { stream ->
+            stream.filter { it.extension.equals("json", ignoreCase = true) }.toList()
         }
+
+        val existingNames = glyphRepository.findAllNames().toSet()
+
+        val glyphs = files.mapNotNull(::tryLoad).toMap()
+
+        glyphs.values.filter { it.name !in existingNames }.forEach { entity -> glyphRepository.save(entity.toEntity())}
+
+        return glyphs
     }
 
     private fun tryLoad(path: Path): Pair<String, Glyph>? = runCatching {

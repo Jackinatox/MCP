@@ -4,6 +4,7 @@ import com.scyed.mcp.docker.ServerProvisioner
 import com.scyed.mcp.jpa.ServerEntity
 import com.scyed.mcp.jpa.ServerRepository
 import com.scyed.mcp.jpa.ServerStatus
+import com.scyed.mcp.jpa.repositories.GlyphRepository
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -21,11 +22,15 @@ import org.springframework.web.server.ResponseStatusException
 class ServerController {
     private final val serverRepository: ServerRepository
     private final val eventPublisher: ApplicationEventPublisher
+    private final val glyphRepository: GlyphRepository
     private val log = LoggerFactory.getLogger(javaClass)
 
-    constructor(servers: ServerRepository, eventPublisher: ApplicationEventPublisher) {
+    constructor(
+        servers: ServerRepository, eventPublisher: ApplicationEventPublisher, glyphRepository: GlyphRepository
+    ) {
         this.serverRepository = servers
         this.eventPublisher = eventPublisher
+        this.glyphRepository = glyphRepository
     }
 
     @RequestMapping
@@ -38,6 +43,9 @@ class ServerController {
         if (serverRepository.existsByName(request.name)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already taken")
         }
+        val glyph = glyphRepository.findById(request.glyphId).orElseThrow() {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Glyph not found")
+        }
         val server = serverRepository.save(
             ServerEntity(
                 request.name,
@@ -48,7 +56,8 @@ class ServerController {
                 false,
                 request.memoryMb,
                 request.cpuPercent,
-                request.env
+                request.env,
+                glyph
             )
         )
 
@@ -67,7 +76,8 @@ class ServerController {
         val description: String? = null,
         @NotNull var cpuPercent: Long,
         @NotNull var memoryMb: Long,
-        @NotNull var env: Map<String, String> = emptyMap()
+        @NotNull var env: Map<String, String> = emptyMap(),
+        @NotNull var glyphId: Long
     )
 
     data class ServerResponse(

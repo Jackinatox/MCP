@@ -51,7 +51,6 @@ class ServerProvisioner(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun reInstallServer(event: ServerProvisioningRequested) {
         var server = serverRepository.findById(event.serverId).orElseThrow()
-        val test = glyphProvider.getAll();
         val glyph = requireNotNull(glyphProvider.getById("egg"))
         log.info("Provisioning request for ${server.id}")
         try {
