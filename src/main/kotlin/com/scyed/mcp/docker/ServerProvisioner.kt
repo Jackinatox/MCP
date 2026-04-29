@@ -2,12 +2,15 @@ package com.scyed.mcp.docker
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.WaitContainerResultCallback
+import com.github.dockerjava.api.exception.ConflictException
+import com.github.dockerjava.api.exception.DockerException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
 import com.scyed.mcp.game.GlyphProvider
-import com.scyed.mcp.jpa.ServerRepository
+import com.scyed.mcp.jpa.ServerEntity
+import com.scyed.mcp.jpa.repositories.ServerRepository
 import com.scyed.mcp.jpa.ServerStatus
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -49,7 +52,7 @@ class ServerProvisioner(
     @Async("provisioningExecutor")
     @EventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    fun reInstallServer(event: ServerProvisioningRequested) {
+    fun reInstallServer(event: ServerReinstallRequested) {
         var server = serverRepository.findById(event.serverId).orElseThrow()
         val glyph = requireNotNull(glyphProvider.getById("egg"))
         log.info("Provisioning request for ${server.id}")
@@ -59,7 +62,6 @@ class ServerProvisioner(
                 docker.createContainerCmd(glyph.scripts.installation.container).withName(server.name).withHostConfig(
                     HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
                         .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
-                        .withAutoRemove(true)
                         .withBinds(
                             Binds(
                                 Bind(
@@ -73,7 +75,7 @@ class ServerProvisioner(
             server.status = ServerStatus.INSTALLING
             server = serverRepository.save(server)
 
-            val callback: WaitContainerResultCallback = WaitContainerResultCallback()
+            val callback = WaitContainerResultCallback()
             log.info("Started Conatiner: ${server.containerId}")
             docker.startContainerCmd(container.id).exec();
             docker.waitContainerCmd(container.id).exec(callback);
@@ -105,6 +107,27 @@ class ServerProvisioner(
         return installScript
     }
 
+    @EventListener
+    public fun stopServer(event: KillServerRequested) {
+        if (event.server.containerId != null) {
+            log.info("Killing and removing container ${event.server.containerId}")
+            try {
+                docker.killContainerCmd(event.server.containerId!!).exec();
+            } catch (e: ConflictException) {
+                log.warn("Failed to kill container ${event.server.containerId}: ${e.message}")
+            }
+            docker.removeContainerCmd(event.server.containerId!!).exec();
+            log.info("Killed and removed container ${event.server.containerId}")
+            event.server.containerId = null
+            event.server.status = ServerStatus.STOPPED
+
+            serverRepository.save(event.server)
+            log.info("Saved server ${event.server.id}")
+        } else {
+            log.info("No container to kill for server, container: ${event.server.containerId} Status: ${event.server.status}")
+        }
+    }
+
     private fun gameFiles(containerId: String): Bind {
         return Bind(
             properties.gameserverStorage.toAbsolutePath().resolve(containerId, "gameFiles").normalize().toString(),
@@ -113,5 +136,6 @@ class ServerProvisioner(
     }
 
 
-    data class ServerProvisioningRequested(val serverId: UUID)
+    data class ServerReinstallRequested(val serverId: UUID)
+    data class KillServerRequested(val server: ServerEntity)
 }
