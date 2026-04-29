@@ -21,16 +21,15 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.springframework.boot:spring-boot-starter-web:4.1.0-RC1")
-    implementation("org.springframework.boot:spring-boot-starter-validation:4.1.0-RC1")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("tools.jackson.module:jackson-module-kotlin")
-    // Source: https://mvnrepository.com/artifact/com.github.docker-java/docker-java-core
-    implementation("com.github.docker-java:docker-java-core:3.7.1")
-    // Source: https://mvnrepository.com/artifact/com.github.docker-java/docker-java-transport-httpclient5
-    implementation("com.github.docker-java:docker-java-transport-httpclient5:3.7.1")
+    implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-web:")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("tools.jackson.module:jackson-module-kotlin")
+    implementation("com.github.docker-java:docker-java-core:3.7.1")
+    implementation("com.github.docker-java:docker-java-transport-httpclient5:3.7.1")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

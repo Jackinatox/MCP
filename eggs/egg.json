@@ -10,8 +10,8 @@
   "description": "A test Minecraft egg used to verify Egg and EggProvider parsing.",
   "features": ["eula", "java_version", "pid_limit"],
   "docker_images": {
-    "Java 21": "ghcr.io/pterodactyl/yolks:java_21",
-    "Java 17": "ghcr.io/pterodactyl/yolks:java_17"
+    "Java 25": "eclipse-temurin:25-jre",
+    "Java 21": "eclipse-temurin:21-jre"
   },
   "file_denylist": [],
   "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}",
@@ -24,7 +24,7 @@
   "scripts": {
     "installation": {
       "script": "#!/bin/bash\napt-get update\napt-get install -y curl jq\nmkdir -p /mnt/server\ncd /mnt/server\ncurl -o server.jar https://example.com/minecraft/server.jar\necho \"Install complete\"\n",
-      "container": "ghcr.io/pterodactyl/installers:debian",
+      "container": "eclipse-temurin:25-jre",
       "entrypoint": "bash"
     }
   },

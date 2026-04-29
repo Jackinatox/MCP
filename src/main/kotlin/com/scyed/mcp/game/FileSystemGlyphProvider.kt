@@ -30,7 +30,7 @@ data class EggProperties(
 
 @Configuration
 @EnableConfigurationProperties(EggProperties::class)
-class EggConfiguration
+class EggConfigurationFS
 
 /**
  * Loads eggs from `*.json` files in [EggProperties.directory]. Each file's name
