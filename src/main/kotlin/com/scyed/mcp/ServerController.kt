@@ -1,7 +1,7 @@
 package com.scyed.mcp
 
 import com.scyed.mcp.docker.ServerProvisioner
-import com.scyed.mcp.jpa.Server
+import com.scyed.mcp.jpa.ServerEntity
 import com.scyed.mcp.jpa.ServerStatus
 import com.scyed.mcp.jpa.ServerRepository
 import jakarta.validation.Valid
@@ -9,10 +9,12 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
 
 @RestController
 @RequestMapping("/{version}/server", version = "v1")
@@ -32,9 +34,12 @@ class ServerController {
     }
 
     @PostMapping
-    fun create(@RequestBody @Valid request: CreateServerRequest): Server {
+    fun create(@RequestBody @Valid request: CreateServerRequest): ServerEntity {
+        if (serverRepository.existsByName(request.name)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Name is already taken")
+        }
         val server = serverRepository.save(
-            Server(
+            ServerEntity(
                 request.name,
                 request.description,
                 "",
@@ -66,6 +71,6 @@ class ServerController {
     )
 
     data class ServerResponse(
-        val count: Long, val servers: List<Server>
+        val count: Long, val servers: List<ServerEntity>
     )
 }
