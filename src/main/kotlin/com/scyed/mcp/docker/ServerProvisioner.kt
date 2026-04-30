@@ -9,8 +9,8 @@ import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
 import com.scyed.mcp.game.GlyphProvider
 import com.scyed.mcp.jpa.ServerEntity
-import com.scyed.mcp.jpa.repositories.ServerRepository
 import com.scyed.mcp.jpa.ServerStatus
+import com.scyed.mcp.jpa.repositories.ServerRepository
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -93,6 +93,37 @@ class ServerProvisioner(
         }
     }
 
+    @Async("provisioningExecutor")
+    fun startServer(event: ServerPowerRequested) {
+        val server = serverRepository.findById(event.serverId)
+            .orElseThrow { throw RuntimeException("Server ${event.serverId} not found") }
+
+        when (event.action) {
+            PowerAction.START -> startServer(server)
+            else -> throw RuntimeException("${event.action} not implemented")
+        }
+    }
+
+    private fun startServer(serevr: ServerEntity) {
+        val server = serverRepository.findById(serevr.id!!)
+            .orElseThrow { throw RuntimeException("Server ${serevr.id.toString()} not found") }
+
+        if (server.containerId != null) {
+            killAndRemoveServer(KillServerRequested(server))
+        }
+
+        val container = docker.createContainerCmd(server.image).withName(server.id.toString()).withHostConfig(
+            HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
+                .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
+                .withBinds(
+                    Binds(
+                        gameFiles(server.id.toString())
+                    )
+                )
+        ).withCmd(server.startCommand).exec()
+
+    }
+
     private fun createInstallScript(containerId: String, script: String): Path {
         val installDirectory =
             properties.installTemp.resolve(containerId, "installScript").toAbsolutePath().normalize();
@@ -106,7 +137,7 @@ class ServerProvisioner(
         return installScript
     }
 
-    public fun killServer(event: KillServerRequested) {
+    public fun killAndRemoveServer(event: KillServerRequested) {
         if (event.server.containerId != null) {
             log.info("Killing and removing container ${event.server.containerId}")
             try {
@@ -143,4 +174,9 @@ class ServerProvisioner(
 
     data class ServerReinstallRequested(val serverId: UUID)
     data class KillServerRequested(val server: ServerEntity)
+    enum class TriggerdBy { USER, INSTALL }
+    data class ServerPowerRequested(val serverId: UUID, val action: PowerAction, val triggeredBy: TriggerdBy)
+    enum class PowerAction {
+        START, STOP, RESTART, KILL
+    }
 }

@@ -1,23 +1,20 @@
 package com.scyed.mcp
 
 import com.scyed.mcp.docker.ServerProvisioner
+import com.scyed.mcp.docker.ServerProvisioner.TriggerdBy
 import com.scyed.mcp.jpa.ServerEntity
-import com.scyed.mcp.jpa.repositories.ServerRepository
 import com.scyed.mcp.jpa.ServerStatus
 import com.scyed.mcp.jpa.repositories.GlyphRepository
+import com.scyed.mcp.jpa.repositories.ServerRepository
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
+import java.util.*
 
 @RestController
 @RequestMapping("/{version}/server", version = "v1")
@@ -64,6 +61,7 @@ class ServerController {
                 request.memoryMb,
                 request.cpuPercent,
                 request.env,
+                request.startCommand ?: glyph.startup,
                 glyph
             )
         )
@@ -81,7 +79,7 @@ class ServerController {
     fun reinstall(
         @RequestBody @Valid request: ReinstallServerRequest, @PathVariable serverId: UUID
     ): ReinstallServerResponse {
-        val server = serverRepository.findById(serverId).orElseThrow() {
+        val server = serverRepository.findById(serverId).orElseThrow {
             throw ResponseStatusException(
                 HttpStatus.NOT_FOUND, "Server with ID $serverId not found"
             )
@@ -92,7 +90,7 @@ class ServerController {
                 HttpStatus.BAD_REQUEST, "Server must be stopped to reinstall or use forceStop=true"
             )
         } else {
-            provisioner.killServer(ServerProvisioner.KillServerRequested(server))
+            provisioner.killAndRemoveServer(ServerProvisioner.KillServerRequested(server))
         }
 
 
@@ -105,6 +103,19 @@ class ServerController {
         return ReinstallServerResponse(serverId, ServerStatus.INSTALLING)
     }
 
+    @PostMapping("{serverId}/power")
+    fun powerAction(@PathVariable serverId: UUID, @RequestParam action: ServerProvisioner.PowerAction) {
+        val server = serverRepository.findById(serverId).orElseThrow {
+            throw ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Server with ID $serverId not found"
+            )
+        }
+
+        eventPublisher.publishEvent(
+            ServerProvisioner.ServerPowerRequested(serverId, action, TriggerdBy.USER)
+        )
+        log.info("Powering action $action")
+    }
 
     data class CreateServerRequest(
         @NotBlank val name: String,
@@ -113,7 +124,8 @@ class ServerController {
         @NotNull var cpuPercent: Long,
         @NotNull var memoryMb: Long,
         @NotNull var env: Map<String, String> = emptyMap(),
-        @NotNull var glyphId: Long
+        @NotNull var glyphId: Long,
+        var startCommand: String?,
     )
 
     data class ReinstallServerRequest(

@@ -31,6 +31,7 @@ class ServerEntity(
     @Column(columnDefinition = "TEXT") // or JSON if your DB supports it
     @Convert(converter = EnvMapConverter::class)
     var env: Map<String, String> = emptyMap(),
+    var startCommand: String,
 
     @ManyToOne()
     var glyphEntity: GlyphEntity,
