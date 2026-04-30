@@ -1,0 +1,69 @@
+{
+  "_comment": "Dummy egg for scyed integration testing - not a real server config",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-04-28T09:00:00+00:00",
+  "name": "Vanilla Minecraft (Dummy)",
+  "author": "test@scyed.com",
+  "description": "A test Minecraft egg used to verify Egg and EggProvider parsing.",
+  "features": [
+    "eula",
+    "java_version",
+    "pid_limit"
+  ],
+  "docker_images": {
+    "Java 25": "ghcr.io/pterodactyl/yolks:java_25",
+    "Java 21": "ghcr.io/pterodactyl/yolks:java_21"
+  },
+  "file_denylist": [],
+  "startup": "cd /mnt/server && java -Xms128M -XX:MaxRAMPercentage=95.0 -jar {{SERVER_JARFILE}}",
+  "config": {
+    "files": "{\"server.properties\": {\"parser\": \"properties\", \"find\": {\"server-ip\": \"0.0.0.0\", \"server-port\": \"{{server.build.default.port}}\", \"enable-query\": \"true\", \"query.port\": \"{{server.build.default.port}}\"}}}",
+    "startup": "{\"done\": \")! For help, type \"}",
+    "logs": "{}",
+    "stop": "stop"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/ash\n# Vanilla MC Installation Script\n#\n# Server Files: /mnt/server\nmkdir -p /mnt/server\ncd /mnt/server\n\nLATEST_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.release'`\nLATEST_SNAPSHOT_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.snapshot'`\n\necho -e \"latest version is $LATEST_VERSION\"\necho -e \"latest snapshot is $LATEST_SNAPSHOT_VERSION\"\n\nif [ -z \"$MINECRAFT_VERSION\" ] || [ \"$MINECRAFT_VERSION\" == \"latest\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelif [ \"$MINECRAFT_VERSION\" == \"snapshot\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_SNAPSHOT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelse\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $MINECRAFT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nfi\n\nDOWNLOAD_URL=$(curl ${MANIFEST_URL} | jq .downloads.server | jq -r '. | .url')\n\necho -e \"running: curl -o ${SERVER_JARFILE} $DOWNLOAD_URL\"\ncurl -o ${SERVER_JARFILE} $DOWNLOAD_URL\n\necho -e \"Install Complete\"",
+      "container": "ghcr.io/pterodactyl/installers:alpine",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Server Jar File",
+      "description": "The name of the server jarfile to run.",
+      "env_variable": "SERVER_JARFILE",
+      "default_value": "server.jar",
+      "user_viewable": true,
+      "user_editable": true,
+      "required": true,
+      "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/",
+      "field_type": "text"
+    },
+    {
+      "name": "Server Version",
+      "description": "Minecraft version to download on first install.",
+      "env_variable": "MINECRAFT_VERSION",
+      "default_value": "latest",
+      "user_viewable": true,
+      "user_editable": true,
+      "required": true,
+      "rules": "required|string|max:20",
+      "field_type": "text"
+    },
+    {
+      "name": "Build Number",
+      "description": "Optional build number, locked from user editing.",
+      "env_variable": "BUILD_NUMBER",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": false,
+      "required": false,
+      "rules": "nullable|string"
+    }
+  ]
+}
