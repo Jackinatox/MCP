@@ -4,15 +4,16 @@ import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.exception.ConflictException
+import com.github.dockerjava.api.exception.NotFoundException
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.StreamType
 import com.github.dockerjava.api.model.Volume
-import com.scyed.mcp.game.GlyphProvider
 import com.scyed.mcp.jpa.ServerEntity
 import com.scyed.mcp.jpa.ServerStatus
+import com.scyed.mcp.jpa.repositories.toDto
 import com.scyed.mcp.jpa.repositories.ServerRepository
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -34,6 +35,8 @@ import java.util.*
 data class GameserverProperties(
     val installTemp: Path = Paths.get("leck"),
     val gameserverStorage: Path = Paths.get("leck"),
+    val userUid: Long = 1001,
+    val userGid: Long = 1001,
 )
 
 @Configuration
@@ -45,7 +48,6 @@ class ServerProvisioner(
     private val docker: DockerClient,
     private val serverRepository: ServerRepository,
     private val properties: GameserverProperties,
-    private val glyphProvider: GlyphProvider
 ) {
     private final val installScriptName = "install.sh"
     private final val gameserverPathInContainer = "/mnt/server"
@@ -62,18 +64,20 @@ class ServerProvisioner(
         log.info("Provisioning request for ${server.id}")
         try {
             val installScript = createInstallScript(event.serverId.toString(), glyph.installScript)
-            val container =
-                docker.createContainerCmd(glyph.installContainer).withName(server.id.toString()).withHostConfig(// TODO: replace with actual server name
+            ensureGameFilesDirectory(event.serverId.toString())
+            val container = docker.createContainerCmd(glyph.installContainer).withName(server.id.toString())
+                .withHostConfig(// TODO: replace with actual server name
                     HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
                         .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
-                        .withBinds(
+                        .withSecurityOpts(listOf("no-new-privileges")).withBinds(
                             Binds(
                                 Bind(
                                     installScript.parent.toString(), Volume("$installScriptPathInContainer")
                                 ), gameFiles(server.id.toString())
                             )
                         )
-                ).withEnv(server.toEnvList()).withCmd("ash", "$installScriptPathInContainer/$installScriptName").exec()
+                ).withUser(containerUser()).withEnv(server.toEnvList())
+                .withCmd("ash", "$installScriptPathInContainer/$installScriptName").exec()
 
 
             server.containerId = container.id
@@ -109,6 +113,7 @@ class ServerProvisioner(
     }
 
     @Async("provisioningExecutor")
+    @EventListener
     fun startServer(event: ServerPowerRequested) {
         val server = serverRepository.findById(event.serverId)
             .orElseThrow { throw RuntimeException("Server ${event.serverId} not found") }
@@ -120,23 +125,32 @@ class ServerProvisioner(
     }
 
     private fun startServer(serevr: ServerEntity) {
-        val server = serverRepository.findById(serevr.id!!)
-            .orElseThrow { throw RuntimeException("Server ${serevr.id.toString()} not found") }
+        log.info("Starting ${serevr.id}")
+        val server = serverRepository.findWithGlyphById(serevr.id!!)
+        requireNotNull(server) { throw RuntimeException("Server ${serevr.id.toString()} not found") }
+        val startup = server.glyphEntity.toDto().renderStartup(server.env)
+        ensureGameFilesDirectory(server.id.toString())
 
         if (server.containerId != null) {
             killAndRemoveServer(KillServerRequested(server))
+            log.debug("Server ${server.containerId} was killed")
         }
 
         val container = docker.createContainerCmd(server.image).withName(server.id.toString()).withHostConfig(
             HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
                 .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
-                .withBinds(
+                .withReadonlyRootfs(true).withSecurityOpts(listOf("no-new-privileges")).withBinds(
                     Binds(
                         gameFiles(server.id.toString())
                     )
                 )
-        ).withCmd(server.startCommand).exec()
+        ).withUser(containerUser()).withEnv(server.toEnvList()).withCmd("/bin/sh", "-c", startup).exec()
 
+        log.info("Created Container ${container.id}")
+        server.containerId = container.id
+        docker.startContainerCmd(container.id).exec()
+        log.info("Started Container ${container.id}")
+        serverRepository.save(server)
     }
 
     private fun createInstallScript(containerId: String, script: String): Path {
@@ -152,14 +166,16 @@ class ServerProvisioner(
         return installScript
     }
 
-    public fun killAndRemoveServer(event: KillServerRequested) {
+    private fun containerUser(): String = "${properties.userUid}:${properties.userGid}"
+
+    public fun killAndRemoveServer(event: KillServerRequested): ServerEntity {
         if (event.server.containerId != null) {
             log.info("Killing and removing container ${event.server.containerId}")
             try {
                 docker.killContainerCmd(event.server.containerId!!).exec();
                 log.info("Killed container ${event.server.containerId}")
                 Thread.sleep(1000)
-            } catch (e: ConflictException) {
+            } catch (e: Exception) {
                 log.error("Failed to kill container ${event.server.containerId}: ${e.message}")
             }
             try {
@@ -172,18 +188,24 @@ class ServerProvisioner(
             event.server.containerId = null
             event.server.status = ServerStatus.STOPPED
 
-            serverRepository.save(event.server)
+            val server = serverRepository.save(event.server)
             log.info("Saved server ${event.server.id}")
+            return server
         } else {
-            log.info("No container to kill for server, container: ${event.server.containerId} Status: ${event.server.status}")
+            throw RuntimeException("No container to kill for server, container: ${event.server.containerId} Status: ${event.server.status}")
         }
     }
 
-    private fun gameFiles(containerId: String): Bind {
-        return Bind(
-            properties.gameserverStorage.toAbsolutePath().resolve(containerId, "gameFiles").normalize().toString(),
-            Volume(gameserverPathInContainer)
-        )
+    private fun gameFiles(containerId: String): Bind =
+        Bind(gameFilesPath(containerId).toString(), Volume(gameserverPathInContainer))
+
+    private fun gameFilesPath(containerId: String): Path =
+        properties.gameserverStorage.toAbsolutePath().resolve(containerId, "gameFiles").normalize()
+
+    private fun ensureGameFilesDirectory(containerId: String): Path {
+        val gameFilesDirectory = gameFilesPath(containerId)
+        Files.createDirectories(gameFilesDirectory)
+        return gameFilesDirectory
     }
 
 
