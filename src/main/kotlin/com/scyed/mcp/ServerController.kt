@@ -2,6 +2,7 @@ package com.scyed.mcp
 
 import com.scyed.mcp.docker.ServerProvisioner
 import com.scyed.mcp.docker.ServerProvisioner.TriggerdBy
+import com.scyed.mcp.docker.stuff.GlyphEnvVarValidator
 import com.scyed.mcp.jpa.ServerEntity
 import com.scyed.mcp.jpa.ServerStatus
 import com.scyed.mcp.jpa.repositories.GlyphRepository
@@ -23,18 +24,21 @@ class ServerController {
     private final val eventPublisher: ApplicationEventPublisher
     private final val glyphRepository: GlyphRepository
     private final val provisioner: ServerProvisioner
+    private final val glyphEnvVarValidator: GlyphEnvVarValidator
     private val log = LoggerFactory.getLogger(javaClass)
 
     constructor(
         servers: ServerRepository,
         eventPublisher: ApplicationEventPublisher,
         glyphRepository: GlyphRepository,
-        provisioner: ServerProvisioner
+        provisioner: ServerProvisioner,
+        glyphEnvVarValidator: GlyphEnvVarValidator
     ) {
         this.serverRepository = servers
         this.eventPublisher = eventPublisher
         this.glyphRepository = glyphRepository
         this.provisioner = provisioner
+        this.glyphEnvVarValidator = glyphEnvVarValidator
     }
 
     @RequestMapping
@@ -49,6 +53,11 @@ class ServerController {
         }
         val glyph = glyphRepository.findById(request.glyphId).orElseThrow() {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Glyph not found")
+        }
+        try {
+            glyphEnvVarValidator.validate(glyph.envVars, request.env)
+        } catch (e: IllegalArgumentException) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
         }
         val server = serverRepository.save(
             ServerEntity(

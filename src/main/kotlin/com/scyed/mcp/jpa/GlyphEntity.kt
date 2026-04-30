@@ -46,7 +46,7 @@ class GlyphEntity(
     var installEntrypoint: String,
     @Column(columnDefinition = "TEXT")
     @Convert(converter = EggVariableListConverter::class)
-    var variables: List<EggVariable> = emptyList(),
+    var envVars: List<EggVariable> = emptyList(),
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

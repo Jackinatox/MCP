@@ -35,7 +35,7 @@ fun GlyphEntity.toDto(): Glyph {
                 entrypoint = installEntrypoint,
             ),
         ),
-        variables = variables,
+        variables = envVars,
     )
 }
 
@@ -59,6 +59,6 @@ fun Glyph.toEntity(): GlyphEntity {
         installScript = scripts.installation.script,
         installContainer = scripts.installation.container,
         installEntrypoint = scripts.installation.entrypoint,
-        variables = variables,
+        envVars = variables,
     )
 }

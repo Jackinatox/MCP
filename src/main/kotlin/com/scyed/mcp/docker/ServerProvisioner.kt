@@ -57,22 +57,23 @@ class ServerProvisioner(
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun reInstallServer(event: ServerReinstallRequested) {
         var server = serverRepository.findById(event.serverId).orElseThrow()
-        val glyph = requireNotNull(glyphProvider.getById("egg"))
+        val glyph = server.glyphEntity
+        requireNotNull(glyph) { "glyph entity not found" }
         log.info("Provisioning request for ${server.id}")
         try {
-            val installScript = createInstallScript(event.serverId.toString(), glyph.scripts.installation.script)
+            val installScript = createInstallScript(event.serverId.toString(), glyph.installScript)
             val container =
-                docker.createContainerCmd(glyph.scripts.installation.container).withName(server.name).withHostConfig(
+                docker.createContainerCmd(glyph.installContainer).withName(server.id.toString()).withHostConfig(// TODO: replace with actual server name
                     HostConfig.newHostConfig().withCpuPercent(server.cpuPercent)
                         .withMemory(server.memoryMb * 1024L * 1024L) // bytes!
                         .withBinds(
                             Binds(
                                 Bind(
-                                    installScript.toString(), Volume("$installScriptPathInContainer/$installScriptName")
+                                    installScript.parent.toString(), Volume("$installScriptPathInContainer")
                                 ), gameFiles(server.id.toString())
                             )
                         )
-                ).withCmd("bash", "$installScriptPathInContainer/$installScriptName").exec()
+                ).withEnv(server.toEnvList()).withCmd("ash", "$installScriptPathInContainer/$installScriptName").exec()
 
 
             server.containerId = container.id

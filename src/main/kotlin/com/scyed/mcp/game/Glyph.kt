@@ -88,6 +88,7 @@ data class EggVariable(
     val defaultValue: String = "",
     val userViewable: Boolean = true,
     val userEditable: Boolean = true,
+    val required: Boolean = false,
     val rules: String = "",
     val fieldType: String? = null,
 )
