@@ -1,6 +1,5 @@
-package com.scyed.clu.docker.stuff
+package com.scyed.clu.glyph
 
-import com.scyed.clu.glyph.EggVariable
 import org.springframework.stereotype.Service
 
 @Service

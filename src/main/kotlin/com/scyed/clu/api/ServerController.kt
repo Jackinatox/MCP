@@ -2,7 +2,7 @@ package com.scyed.clu.api
 
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.provisioning.DockerProvisioner
-import com.scyed.clu.docker.stuff.GlyphEnvVarValidator
+import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerStatus
 import com.scyed.clu.glyph.GlyphRepository

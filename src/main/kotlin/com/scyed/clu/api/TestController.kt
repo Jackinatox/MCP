@@ -1,7 +1,5 @@
 package com.scyed.clu.api
 
-import com.github.dockerjava.api.model.Info
-import com.scyed.clu.docker.Provisioning
 import org.springframework.http.HttpStatus
 import org.springframework.validation.FieldError
 import org.springframework.validation.ObjectError
@@ -16,16 +14,9 @@ import java.util.function.Consumer
 @RestController
 @RequestMapping("/", "v1")
 class TestController {
-    private final val provisioning: Provisioning
 
-    constructor(provisioning: Provisioning) {
-        this.provisioning = provisioning
+    constructor() {
     }
-    @GetMapping
-    fun index(): Info {
-        return provisioning.getStatus()
-    }
-
 
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException::class)

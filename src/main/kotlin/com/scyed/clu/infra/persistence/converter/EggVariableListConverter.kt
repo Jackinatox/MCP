@@ -1,4 +1,4 @@
-package com.scyed.clu.jpa.converter
+package com.scyed.clu.infra.persistence.converter
 
 import com.scyed.clu.glyph.EggVariable
 import jakarta.persistence.AttributeConverter

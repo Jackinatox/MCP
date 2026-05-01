@@ -1,7 +1,7 @@
 package com.scyed.clu.server
 
 import com.scyed.clu.glyph.GlyphEntity
-import com.scyed.clu.jpa.converter.EnvMapConverter
+import com.scyed.clu.infra.persistence.converter.EnvMapConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity

@@ -1,8 +1,8 @@
 package com.scyed.clu.glyph
 
-import com.scyed.clu.jpa.converter.EggVariableListConverter
-import com.scyed.clu.jpa.converter.EnvMapConverter
-import com.scyed.clu.jpa.converter.StringListConverter
+import com.scyed.clu.infra.persistence.converter.EggVariableListConverter
+import com.scyed.clu.infra.persistence.converter.EnvMapConverter
+import com.scyed.clu.infra.persistence.converter.StringListConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity

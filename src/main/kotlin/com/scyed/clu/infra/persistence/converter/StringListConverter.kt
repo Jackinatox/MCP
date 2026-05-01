@@ -1,4 +1,4 @@
-package com.scyed.clu.jpa.converter
+package com.scyed.clu.infra.persistence.converter
 
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
