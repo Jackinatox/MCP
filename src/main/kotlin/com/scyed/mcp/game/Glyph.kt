@@ -8,12 +8,8 @@ import tools.jackson.databind.annotation.JsonNaming
 /**
  * Pterodactyl / Pelican egg descriptor (PTDL_v2 schema).
  *
- * Maps directly to the JSON exported by a panel. Unknown keys are ignored so
- * future schema additions don't break parsing.
+ * Maps roughly to pterodactyl eggs but will diverge later on
  *
- * The `config.files`, `config.startup`, and `config.logs` fields are stored as
- * embedded JSON strings — parse them with your injected ObjectMapper when you
- * need their contents (`objectMapper.readTree(egg.config.files)`).
  */
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy::class)
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -32,12 +28,6 @@ data class Glyph(
     val scripts: EggScripts,
     val variables: List<EggVariable> = emptyList(),
 ) {
-    /** Pick a docker image by key, or fall back to the first one declared. */
-    fun resolveDockerImage(key: String? = null): String =
-        key?.let { dockerImages[it] }
-            ?: dockerImages.values.firstOrNull()
-            ?: error("Egg '$name' declares no docker images")
-
     /** Substitute `{{VAR}}` placeholders in the startup command using egg defaults + overrides. */
     fun renderStartup(overrides: Map<String, String> = emptyMap()): String {
         val values = variables.associate { it.envVariable to it.defaultValue } + overrides
