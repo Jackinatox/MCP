@@ -4,7 +4,7 @@ The current structure groups files by technology (`docker/`, `jpa/`). The recomm
 groups by **domain** instead. This makes it obvious where to add new code and avoids
 the sprawl of stuffing all Docker logic in one package regardless of what it does.
 
-The root package changes from `com.scyed.mcp` to `com.scyed.clu` to reflect that this is
+The root package changes from `com.scyed.clu` to `com.scyed.clu` to reflect that this is
 the CLU service, not the MCP.
 
 ---
@@ -127,6 +127,6 @@ importable from anywhere without pulling in all of `ServerProvisioner`.
 Docker client factory, JPA converters, async executor — none of these are domain concepts.
 Grouping them in `infra/` signals "plumbing, not business logic".
 
-### Root package rename: `com.scyed.mcp` → `com.scyed.clu`
+### Root package rename: `com.scyed.clu` → `com.scyed.clu`
 Avoids confusion when the actual MCP service is built as a separate project. Update
 `application.properties` logging level accordingly.

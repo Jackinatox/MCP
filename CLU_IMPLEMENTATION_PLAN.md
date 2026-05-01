@@ -390,7 +390,7 @@ Also wrap lifecycle transitions in transactions where appropriate, but do not ho
 Example package layout:
 
 ```text
-com.scyed.mcp
+com.scyed.clu
   api
   application
   console

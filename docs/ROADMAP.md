@@ -10,7 +10,7 @@ Phase 1 is a prerequisite for everything else — don't add new features before 
 No new features. Get the existing code into a state worth building on.
 
 ### Tasks
-- [ ] Rename root package `com.scyed.mcp` → `com.scyed.clu`
+- [ ] Rename root package `com.scyed.clu` → `com.scyed.clu`
 - [ ] Apply the full package structure from `PACKAGE_STRUCTURE.md`
 - [ ] Delete `Provisioning` interface and `DockerProvisioningService`; rename `ServerProvisioner` → `DockerProvisioner`
 - [ ] Fix `AsyncConfig`: delete the dead outer wrapper class, annotate only the inner `@Configuration`
@@ -169,7 +169,7 @@ Makes the CLU a participant in the two-tier architecture rather than a standalon
 
 ## Phase 6 — MCP Service (separate project)
 
-New Spring Boot project: `com.scyed.mcp`, PostgreSQL-backed. The CLU does not change here
+New Spring Boot project: `com.scyed.clu`, PostgreSQL-backed. The CLU does not change here
 except to consume the MCP's heartbeat and sync APIs.
 
 ### Scope

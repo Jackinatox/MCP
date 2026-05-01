@@ -1,7 +1,7 @@
 # CLU — Current Progress Overview
 
 This codebase is the **CLU (Codified Likeness Utility)** implementation — the per-host worker node
-in the two-tier gameserver hosting platform. Despite the project name `com.scyed.mcp`, all
+in the two-tier gameserver hosting platform. Despite the project name `com.scyed.clu`, all
 functionality here is CLU-scope: Docker container lifecycle, local gameserver management, and
 egg/glyph definitions. The MCP (Master Control Program) does not exist yet and will be a
 separate service.
@@ -84,7 +84,7 @@ separate service.
    belongs in a dedicated `@ControllerAdvice` class; the diagnostics endpoint should be removed or
    kept only as a dev tool.
 
-4. **Package root is `com.scyed.mcp`** — since this is the CLU, the root should be
+4. **Package root is `com.scyed.clu`** — since this is the CLU, the root should be
    `com.scyed.clu` to avoid confusion when the real MCP service is built.
 
 5. **`AsyncConfig` nesting bug** — the outer `class AsyncConfig` is not annotated and wraps
