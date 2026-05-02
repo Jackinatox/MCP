@@ -9,9 +9,12 @@ import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
 import com.scyed.clu.glyph.toDto
+import com.scyed.clu.server.PowerAction
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
 import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.server.event.KillServerRequested
+import com.scyed.clu.server.event.ServerPowerRequested
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
@@ -112,7 +115,7 @@ class DockerProvisioner(
 
     @Async("provisioningExecutor")
     @EventListener
-    fun startServer(event: ServerPowerRequested) {
+    fun onPowerRequested(event: ServerPowerRequested) {
         val server = serverRepository.findById(event.serverId)
             .orElseThrow { throw RuntimeException("Server ${event.serverId} not found") }
 
@@ -206,13 +209,6 @@ class DockerProvisioner(
         return gameFilesDirectory
     }
 
-
-    data class KillServerRequested(val server: ServerEntity)
-    enum class TriggerdBy { USER, INSTALL }
-    data class ServerPowerRequested(val serverId: UUID, val action: PowerAction, val triggeredBy: TriggerdBy)
-    enum class PowerAction {
-        START, STOP, RESTART, KILL
-    }
 
     private fun streamLogsToFile(containerId: String, logFile: Path): ResultCallback.Adapter<Frame> {
         Files.createDirectories(logFile.parent)

@@ -6,18 +6,15 @@ import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import java.util.concurrent.Executor
 
+@Configuration
+@EnableAsync
 class AsyncConfig {
-    @Configuration
-    @EnableAsync
-    class AsyncConfig {
-        @Bean(name = ["provisioningExecutor"])
-        fun provisioningExecutor(): Executor =
-            ThreadPoolTaskExecutor().apply {
-                corePoolSize = 4
-                maxPoolSize = 8
-                queueCapacity = 100
-                setThreadNamePrefix("provisioning-")
-                initialize()
-            }
+    @Bean(name = ["provisioningExecutor"])
+    fun provisioningExecutor(): Executor = ThreadPoolTaskExecutor().apply {
+        corePoolSize = 4
+        maxPoolSize = 8
+        queueCapacity = 100
+        setThreadNamePrefix("provisioning-")
+        initialize()
     }
 }
