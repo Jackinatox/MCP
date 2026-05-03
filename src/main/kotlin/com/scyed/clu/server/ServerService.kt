@@ -3,6 +3,7 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
+import com.scyed.clu.provisioning.ContainerAttachmentManager
 import com.scyed.clu.provisioning.DockerProvisioner
 import com.scyed.clu.server.event.KillServerRequested
 import com.scyed.clu.server.event.ServerPowerRequested
@@ -20,7 +21,7 @@ class ServerService(
     private val glyphRepository: GlyphRepository,
     private val glyphEnvVarValidator: GlyphEnvVarValidator,
     private val eventPublisher: ApplicationEventPublisher,
-    private val provisioner: DockerProvisioner,
+    private val provisioner: DockerProvisioner
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 

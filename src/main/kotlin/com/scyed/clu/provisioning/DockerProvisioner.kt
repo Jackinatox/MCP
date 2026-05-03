@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
+import com.scyed.clu.console.ConsolePump
 import com.scyed.clu.glyph.toDto
 import com.scyed.clu.server.PowerAction
 import com.scyed.clu.server.ServerEntity
@@ -29,7 +30,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
-import java.util.*
 
 
 @ConfigurationProperties(prefix = "scyed.gameserver")
@@ -49,6 +49,8 @@ class DockerProvisioner(
     private val docker: DockerClient,
     private val serverRepository: ServerRepository,
     private val properties: GameserverProperties,
+    private val containerAttachmentManager: ContainerAttachmentManager,
+    private val consolePump: ConsolePump
 ) {
     private final val installScriptName = "install.sh"
     private final val gameserverPathInContainer = "/mnt/server"
@@ -145,7 +147,11 @@ class DockerProvisioner(
                         gameFiles(server.id.toString())
                     )
                 )
-        ).withUser(containerUser()).withEnv(server.toEnvList()).withCmd("/bin/sh", "-c", startup).exec()
+        ).withStdinOpen(true).withUser(containerUser()).withEnv(server.toEnvList()).withCmd("/bin/sh", "-c", startup)
+            .exec()
+
+        val attachment = containerAttachmentManager.attach(server.id!!, container.id)
+        consolePump.start(attachment)
 
         log.info("Created Container ${container.id}")
         server.containerId = container.id
@@ -173,6 +179,8 @@ class DockerProvisioner(
         if (event.server.containerId != null) {
             log.info("Killing and removing container ${event.server.containerId}")
             try {
+                consolePump.stop(event.server.id!!)
+                containerAttachmentManager.detach(event.server.id!!)
                 docker.killContainerCmd(event.server.containerId!!).exec();
                 log.info("Killed container ${event.server.containerId}")
                 Thread.sleep(1000)
