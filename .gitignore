@@ -42,3 +42,4 @@ out/
 /database.mv.db
 /database.trace.db
 /pt/*
+/src/main/resources/static/*
