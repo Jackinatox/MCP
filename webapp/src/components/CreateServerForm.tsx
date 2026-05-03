@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import type { GlyphSummary } from "@/types/server"
 
 interface CreateServerFields {
   name: string
@@ -57,14 +58,36 @@ export function CreateServerForm({
   const [fields, setFields] = useState<CreateServerFields>(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [glyphs, setGlyphs] = useState<GlyphSummary[]>([])
+  const [glyphEnv, setGlyphEnv] = useState<Record<string, string>>({})
   const firstRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     firstRef.current?.focus()
+    fetch("/v1/glyph")
+      .then((r) => r.json())
+      .then((data: GlyphSummary[]) => setGlyphs(data))
+      .catch(() => {})
   }, [])
 
   const set = (key: keyof Omit<CreateServerFields, "env">, value: string) =>
     setFields((f) => ({ ...f, [key]: value }))
+
+  const selectGlyph = (id: string) => {
+    const glyph = glyphs.find((g) => String(g.id) === id)
+    const firstImage = glyph ? Object.values(glyph.dockerImages)[0] ?? "" : ""
+    setFields((f) => ({
+      ...f,
+      glyphId: id,
+      startCommand: glyph ? glyph.startup : f.startCommand,
+      imageName: firstImage,
+    }))
+    if (glyph) {
+      setGlyphEnv(Object.fromEntries(glyph.envVars.map((v) => [v.env_variable, v.default_value])))
+    } else {
+      setGlyphEnv({})
+    }
+  }
 
   const addEnv = () => setFields((f) => ({ ...f, env: [...f.env, { key: "", value: "" }] }))
   const removeEnv = (i: number) =>
@@ -81,6 +104,7 @@ export function CreateServerForm({
     setError(null)
     setSubmitting(true)
 
+    const customEnv = Object.fromEntries(fields.env.filter((e) => e.key).map((e) => [e.key, e.value]))
     const body = {
       name: fields.name,
       imageName: fields.imageName,
@@ -89,7 +113,7 @@ export function CreateServerForm({
       memoryMb: Number(fields.memoryMb),
       glyphId: Number(fields.glyphId),
       startCommand: fields.startCommand || undefined,
-      env: Object.fromEntries(fields.env.filter((e) => e.key).map((e) => [e.key, e.value])),
+      env: { ...glyphEnv, ...customEnv },
     }
 
     fetch("/v1/server", {
@@ -105,6 +129,8 @@ export function CreateServerForm({
       .catch((e: Error) => setError(e.message))
       .finally(() => setSubmitting(false))
   }
+
+  const selectedGlyph = glyphs.find((g) => String(g.id) === fields.glyphId)
 
   return (
     <form onSubmit={submit} className="rounded-lg border bg-card text-card-foreground">
@@ -127,12 +153,25 @@ export function CreateServerForm({
             />
           </Field>
           <Field label="Image" required>
-            <input
-              className={inputCls}
-              value={fields.imageName}
-              onChange={(e) => set("imageName", e.target.value)}
-              required
-            />
+            {selectedGlyph && Object.keys(selectedGlyph.dockerImages).length > 0 ? (
+              <select
+                className={inputCls}
+                value={fields.imageName}
+                onChange={(e) => set("imageName", e.target.value)}
+                required
+              >
+                {Object.entries(selectedGlyph.dockerImages).map(([label, image]) => (
+                  <option key={image} value={image}>{label} — {image}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                className={inputCls}
+                value={fields.imageName}
+                onChange={(e) => set("imageName", e.target.value)}
+                required
+              />
+            )}
           </Field>
         </div>
 
@@ -165,15 +204,18 @@ export function CreateServerForm({
               required
             />
           </Field>
-          <Field label="Glyph ID" required>
-            <input
+          <Field label="Glyph" required>
+            <select
               className={inputCls}
-              type="number"
-              min={1}
               value={fields.glyphId}
-              onChange={(e) => set("glyphId", e.target.value)}
+              onChange={(e) => selectGlyph(e.target.value)}
               required
-            />
+            >
+              <option value="" disabled>Select glyph…</option>
+              {glyphs.map((g) => (
+                <option key={g.id} value={g.id}>{g.name}</option>
+              ))}
+            </select>
           </Field>
         </div>
 
@@ -185,9 +227,41 @@ export function CreateServerForm({
           />
         </Field>
 
+        {selectedGlyph && selectedGlyph.envVars.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              {selectedGlyph.name} variables
+            </span>
+            {selectedGlyph.envVars.map((v) => (
+              <div key={v.env_variable} className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className={`${inputCls} flex-1 font-mono bg-muted text-muted-foreground select-none`}>
+                    {v.env_variable}
+                  </span>
+                  <span className="text-muted-foreground">=</span>
+                  <input
+                    className={`${inputCls} flex-1 font-mono`}
+                    placeholder={v.default_value || "value"}
+                    value={glyphEnv[v.env_variable] ?? ""}
+                    onChange={(e) =>
+                      setGlyphEnv((prev) => ({ ...prev, [v.env_variable]: e.target.value }))
+                    }
+                    required={v.required}
+                  />
+                </div>
+                {v.description && (
+                  <span className="pl-1 text-xs text-muted-foreground">{v.description}</span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">Environment variables</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {selectedGlyph ? "Additional variables" : "Environment variables"}
+            </span>
             <button
               type="button"
               onClick={addEnv}

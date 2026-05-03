@@ -1,5 +1,21 @@
 package com.scyed.clu.glyph
 
+data class GlyphSummary(
+    val id: Long?,
+    val name: String,
+    val envVars: List<EggVariable>,
+    val startup: String,
+    val dockerImages: Map<String, String>,
+)
+
+fun GlyphEntity.toSummary() = GlyphSummary(
+    id = id,
+    name = name,
+    envVars = envVars,
+    startup = startup,
+    dockerImages = dockerImages,
+)
+
 fun GlyphEntity.toDto(): Glyph {
     return Glyph(
         comment = comment,

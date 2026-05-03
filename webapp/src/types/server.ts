@@ -1,3 +1,19 @@
+export interface GlyphEnvVar {
+  name: string
+  env_variable: string
+  description: string
+  default_value: string
+  required: boolean
+}
+
+export interface GlyphSummary {
+  id: number
+  name: string
+  envVars: GlyphEnvVar[]
+  startup: string
+  dockerImages: Record<string, string>
+}
+
 export type ServerStatus =
   | "PROVISIONING"
   | "INSTALLING"
