@@ -23,6 +23,20 @@ export function ServerCard({ server }: { server: ServerEntity }) {
     }
   }
 
+  const handleReinstall = async (serverId: string) => {
+    const response = await fetch(`/v1/server/${serverId}/reinstall`, {
+      method: "POST",
+      body: JSON.stringify({ image: server.image }),
+    })
+    if (!response.ok) {
+      toast.error(
+        `Failed to reinstall server: ${response.status} ${response.statusText}`
+      )
+    } else {
+      toast.success("Server reinstalling")
+    }
+  }
+
   return (
     <div className="rounded-lg border bg-card text-card-foreground">
       <div
@@ -57,6 +71,9 @@ export function ServerCard({ server }: { server: ServerEntity }) {
               <Button disabled>Restart</Button>
             </ButtonGroup>
             <Button className="">Console</Button>
+            <Button className="" onClick={() => handleReinstall(server.id)}>
+              Reinstall
+            </Button>
           </div>
           <div className="border-t px-4 pt-3 pb-4 text-xs">
             <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5">
