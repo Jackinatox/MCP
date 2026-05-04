@@ -14,9 +14,20 @@ class StartupCheckRunner(
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun run(args: ApplicationArguments) {
+        val osString = System.getProperty("os.name");
+        val os = if (osString.lowercase().contains("windows")) {
+            StartupCheck.OSType.WINDOWS
+        } else {
+            StartupCheck.OSType.UNIX
+        }
+
         startupChecks.sortedBy { it.name }.forEach { check ->
-            log.info("Running startup check {}", check.name)
-            check.runCheck()
+            if (check.getOSType() == StartupCheck.OSType.BOTH || check.getOSType() == os) {
+                log.info("Running startup check {}", check.name)
+                check.runCheck()
+            } else {
+                log.debug("Not running startup check {}", check.name)
+            }
             log.info("Startup check passed {}", check.name)
         }
     }

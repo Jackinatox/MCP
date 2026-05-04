@@ -10,10 +10,14 @@ class GameserverFilesystemStartupCheck(
     private val properties: GameserverProperties,
 ) : StartupCheck {
     override val name: String = "gameserver-filesystem"
+    override fun getOSType(): StartupCheck.OSType {
+        return StartupCheck.OSType.UNIX
+    }
 
     override fun runCheck() {
         val installTemp = ensureDirectory(properties.installTemp.toAbsolutePath().normalize(), "installTemp")
-        val gameserverStorage = ensureDirectory(properties.gameserverStorage.toAbsolutePath().normalize(), "gameserverStorage")
+        val gameserverStorage =
+            ensureDirectory(properties.gameserverStorage.toAbsolutePath().normalize(), "gameserverStorage")
 
         validateUnixOwnership(installTemp, "installTemp")
         validateUnixOwnership(gameserverStorage, "gameserverStorage")

@@ -171,31 +171,22 @@ export function CreateServerForm({
               required
             />
           </Field>
-          <Field label="Image" required>
-            {selectedGlyph &&
-            Object.keys(selectedGlyph.dockerImages).length > 0 ? (
-              <select
-                className={inputCls}
-                value={fields.imageName}
-                onChange={(e) => set("imageName", e.target.value)}
-                required
-              >
-                {Object.entries(selectedGlyph.dockerImages).map(
-                  ([label, image]) => (
-                    <option key={image} value={image}>
-                      {label} — {image}
-                    </option>
-                  )
-                )}
-              </select>
-            ) : (
-              <input
-                className={inputCls}
-                value={fields.imageName}
-                onChange={(e) => set("imageName", e.target.value)}
-                required
-              />
-            )}
+          <Field label="Glyph" required>
+            <select
+              className={inputCls}
+              value={fields.glyphId}
+              onChange={(e) => selectGlyph(e.target.value)}
+              required
+            >
+              <option value="" disabled>
+                Select glyph…
+              </option>
+              {glyphs.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
+              ))}
+            </select>
           </Field>
         </div>
 
@@ -228,22 +219,31 @@ export function CreateServerForm({
               required
             />
           </Field>
-          <Field label="Glyph" required>
-            <select
-              className={inputCls}
-              value={fields.glyphId}
-              onChange={(e) => selectGlyph(e.target.value)}
-              required
-            >
-              <option value="" disabled>
-                Select glyph…
-              </option>
-              {glyphs.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.name}
-                </option>
-              ))}
-            </select>
+          <Field label="Image" required>
+            {selectedGlyph &&
+            Object.keys(selectedGlyph.dockerImages).length > 0 ? (
+              <select
+                className={inputCls}
+                value={fields.imageName}
+                onChange={(e) => set("imageName", e.target.value)}
+                required
+              >
+                {Object.entries(selectedGlyph.dockerImages).map(
+                  ([label, image]) => (
+                    <option key={image} value={image}>
+                      {label} — {image}
+                    </option>
+                  )
+                )}
+              </select>
+            ) : (
+              <input
+                className={inputCls}
+                value={fields.imageName}
+                onChange={(e) => set("imageName", e.target.value)}
+                required
+              />
+            )}
           </Field>
         </div>
 
