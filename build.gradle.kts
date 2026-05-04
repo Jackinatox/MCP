@@ -25,6 +25,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-web:")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("org.springframework:spring-websocket")
+    implementation("org.springframework:spring-messaging")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("com.github.docker-java:docker-java-core:3.7.1")
