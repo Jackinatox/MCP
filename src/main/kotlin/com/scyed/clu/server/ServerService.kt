@@ -82,4 +82,8 @@ class ServerService(
         }
         eventPublisher.publishEvent(ServerPowerRequested(serverId, action, TriggeredBy.USER))
     }
+
+    fun snycStateFromContainer(serverId: UUID){
+        val server = serverRepository.findById(serverId)
+    }
 }
