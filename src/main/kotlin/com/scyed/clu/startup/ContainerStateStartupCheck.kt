@@ -46,7 +46,8 @@ class ContainerStateStartupCheck(
         }
 
         if (cid.isNullOrBlank()) {
-            throw RuntimeException("Container cid not set during startup check for server ${server.name} - ${server.id}")
+            return ServerStatus.STOPPED
+//            throw RuntimeException("Container cid not set during startup check for server ${server.name} - ${server.id}")
         }
 
         return try {
