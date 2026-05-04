@@ -75,7 +75,7 @@ export function CreateServerForm({
 
   const selectGlyph = (id: string) => {
     const glyph = glyphs.find((g) => String(g.id) === id)
-    const firstImage = glyph ? Object.values(glyph.dockerImages)[0] ?? "" : ""
+    const firstImage = glyph ? (Object.values(glyph.dockerImages)[0] ?? "") : ""
     setFields((f) => ({
       ...f,
       glyphId: id,
@@ -83,13 +83,18 @@ export function CreateServerForm({
       imageName: firstImage,
     }))
     if (glyph) {
-      setGlyphEnv(Object.fromEntries(glyph.envVars.map((v) => [v.env_variable, v.default_value])))
+      setGlyphEnv(
+        Object.fromEntries(
+          glyph.envVars.map((v) => [v.env_variable, v.default_value])
+        )
+      )
     } else {
       setGlyphEnv({})
     }
   }
 
-  const addEnv = () => setFields((f) => ({ ...f, env: [...f.env, { key: "", value: "" }] }))
+  const addEnv = () =>
+    setFields((f) => ({ ...f, env: [...f.env, { key: "", value: "" }] }))
   const removeEnv = (i: number) =>
     setFields((f) => ({ ...f, env: f.env.filter((_, idx) => idx !== i) }))
   const setEnv = (i: number, part: "key" | "value", value: string) =>
@@ -104,7 +109,9 @@ export function CreateServerForm({
     setError(null)
     setSubmitting(true)
 
-    const customEnv = Object.fromEntries(fields.env.filter((e) => e.key).map((e) => [e.key, e.value]))
+    const customEnv = Object.fromEntries(
+      fields.env.filter((e) => e.key).map((e) => [e.key, e.value])
+    )
     const body = {
       name: fields.name,
       imageName: fields.imageName,
@@ -122,7 +129,12 @@ export function CreateServerForm({
       body: JSON.stringify(body),
     })
       .then((r) => {
-        if (!r.ok) return r.text().then((t) => Promise.reject(new Error(t || `${r.status} ${r.statusText}`)))
+        if (!r.ok)
+          return r
+            .text()
+            .then((t) =>
+              Promise.reject(new Error(t || `${r.status} ${r.statusText}`))
+            )
         return r.json()
       })
       .then(() => onCreated())
@@ -133,10 +145,17 @@ export function CreateServerForm({
   const selectedGlyph = glyphs.find((g) => String(g.id) === fields.glyphId)
 
   return (
-    <form onSubmit={submit} className="rounded-lg border bg-card text-card-foreground">
+    <form
+      onSubmit={submit}
+      className="rounded-lg border bg-card text-card-foreground"
+    >
       <div className="flex items-center justify-between border-b px-4 py-3">
         <p className="font-medium">New server</p>
-        <button type="button" onClick={onCancel} className="text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-muted-foreground hover:text-foreground"
+        >
           <X className="h-4 w-4" />
         </button>
       </div>
@@ -153,16 +172,21 @@ export function CreateServerForm({
             />
           </Field>
           <Field label="Image" required>
-            {selectedGlyph && Object.keys(selectedGlyph.dockerImages).length > 0 ? (
+            {selectedGlyph &&
+            Object.keys(selectedGlyph.dockerImages).length > 0 ? (
               <select
                 className={inputCls}
                 value={fields.imageName}
                 onChange={(e) => set("imageName", e.target.value)}
                 required
               >
-                {Object.entries(selectedGlyph.dockerImages).map(([label, image]) => (
-                  <option key={image} value={image}>{label} — {image}</option>
-                ))}
+                {Object.entries(selectedGlyph.dockerImages).map(
+                  ([label, image]) => (
+                    <option key={image} value={image}>
+                      {label} — {image}
+                    </option>
+                  )
+                )}
               </select>
             ) : (
               <input
@@ -211,9 +235,13 @@ export function CreateServerForm({
               onChange={(e) => selectGlyph(e.target.value)}
               required
             >
-              <option value="" disabled>Select glyph…</option>
+              <option value="" disabled>
+                Select glyph…
+              </option>
               {glyphs.map((g) => (
-                <option key={g.id} value={g.id}>{g.name}</option>
+                <option key={g.id} value={g.id}>
+                  {g.name}
+                </option>
               ))}
             </select>
           </Field>
@@ -235,7 +263,9 @@ export function CreateServerForm({
             {selectedGlyph.envVars.map((v) => (
               <div key={v.env_variable} className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  <span className={`${inputCls} flex-1 font-mono bg-muted text-muted-foreground select-none`}>
+                  <span
+                    className={`${inputCls} flex-1 bg-muted font-mono text-muted-foreground select-none`}
+                  >
                     {v.env_variable}
                   </span>
                   <span className="text-muted-foreground">=</span>
@@ -244,13 +274,18 @@ export function CreateServerForm({
                     placeholder={v.default_value || "value"}
                     value={glyphEnv[v.env_variable] ?? ""}
                     onChange={(e) =>
-                      setGlyphEnv((prev) => ({ ...prev, [v.env_variable]: e.target.value }))
+                      setGlyphEnv((prev) => ({
+                        ...prev,
+                        [v.env_variable]: e.target.value,
+                      }))
                     }
                     required={v.required}
                   />
                 </div>
                 {v.description && (
-                  <span className="pl-1 text-xs text-muted-foreground">{v.description}</span>
+                  <span className="pl-1 text-xs text-muted-foreground">
+                    {v.description}
+                  </span>
                 )}
               </div>
             ))}

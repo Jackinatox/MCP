@@ -40,10 +40,19 @@ export function ServersPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button size="sm" variant="outline" onClick={fetchServers} disabled={loading}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={fetchServers}
+            disabled={loading}
+          >
             {loading ? "Loading…" : "Refresh"}
           </Button>
-          <Button size="sm" onClick={() => setCreating(true)} disabled={creating}>
+          <Button
+            size="sm"
+            onClick={() => setCreating(true)}
+            disabled={creating}
+          >
             <Plus className="mr-1 h-3.5 w-3.5" /> New server
           </Button>
         </div>
@@ -66,11 +75,15 @@ export function ServersPage() {
       )}
 
       {loading && !data && (
-        <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
+        <div className="py-8 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
       )}
 
       {data && data.servers.length === 0 && !creating && (
-        <div className="py-8 text-center text-sm text-muted-foreground">No servers found.</div>
+        <div className="py-8 text-center text-sm text-muted-foreground">
+          No servers found.
+        </div>
       )}
 
       {data && data.servers.map((s) => <ServerCard key={s.id} server={s} />)}

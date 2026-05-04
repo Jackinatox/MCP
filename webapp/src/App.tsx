@@ -11,7 +11,7 @@ export function App() {
     <BrowserRouter basename="/v1/webApp">
       <div className="flex min-h-svh">
         <aside className="w-52 shrink-0 border-r bg-sidebar py-6">
-          <p className="mb-4 px-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-4 px-4 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
             Tools
           </p>
           <nav className="flex flex-col gap-0.5 px-2">
@@ -22,7 +22,7 @@ export function App() {
                 className={({ isActive }) =>
                   `flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors ${
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                       : "text-sidebar-foreground hover:bg-sidebar-accent/60"
                   }`
                 }
@@ -39,7 +39,11 @@ export function App() {
             <Routes>
               <Route index element={<Navigate to="/servers" replace />} />
               {TOOLS.map((tool) => (
-                <Route key={tool.path} path={tool.path} element={<tool.component />} />
+                <Route
+                  key={tool.path}
+                  path={tool.path}
+                  element={<tool.component />}
+                />
               ))}
             </Routes>
           </div>

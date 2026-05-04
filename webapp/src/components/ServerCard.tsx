@@ -16,9 +16,11 @@ export function ServerCard({ server }: { server: ServerEntity }) {
         <div className="flex items-center gap-3">
           <Server className="h-4 w-4 text-muted-foreground" />
           <div>
-            <p className="font-medium leading-none">{server.name}</p>
+            <p className="leading-none font-medium">{server.name}</p>
             {server.description && (
-              <p className="mt-1 text-xs text-muted-foreground">{server.description}</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {server.description}
+              </p>
             )}
           </div>
         </div>
@@ -31,7 +33,7 @@ export function ServerCard({ server }: { server: ServerEntity }) {
       </div>
 
       {open && (
-        <div className="border-t px-4 pb-4 pt-3 text-xs">
+        <div className="border-t px-4 pt-3 pb-4 text-xs">
           <dl className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1.5">
             <dt className="text-muted-foreground">ID</dt>
             <dd className="font-mono break-all">{server.id}</dd>
