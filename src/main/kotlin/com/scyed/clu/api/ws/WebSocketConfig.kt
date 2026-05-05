@@ -1,6 +1,7 @@
 package com.scyed.clu.api.ws
 
 import com.scyed.clu.api.ws.handlers.ConsoleWSHandler
+import com.scyed.clu.console.ConsolePump
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.WebSocketHandler
@@ -11,13 +12,13 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 
 @Configuration
 @EnableWebSocket
-class WebSocketConfig : WebSocketConfigurer {
+class WebSocketConfig(val consolePump: ConsolePump) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(consoleWSHandler(), "/console").addInterceptors(HttpSessionHandshakeInterceptor())
+        registry.addHandler(consoleWSHandler(), "/v1/ws/console/{serverId}").addInterceptors(HttpSessionHandshakeInterceptor())
     }
 
     @Bean
     fun consoleWSHandler(): WebSocketHandler {
-        return ConsoleWSHandler()
+        return ConsoleWSHandler(consolePump)
     }
 }

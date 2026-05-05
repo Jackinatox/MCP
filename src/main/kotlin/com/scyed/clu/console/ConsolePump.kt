@@ -3,7 +3,9 @@ package com.scyed.clu.console
 import com.scyed.clu.provisioning.ContainerAttachmentManager
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
-import java.util.UUID
+import org.springframework.web.socket.TextMessage
+import org.springframework.web.socket.WebSocketSession
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.thread
 
@@ -11,6 +13,7 @@ import kotlin.concurrent.thread
 class ConsolePump {
     private final val logger = LoggerFactory.getLogger(javaClass)
     private val attachments = ConcurrentHashMap<UUID, Thread>()
+    private val sessions = ConcurrentHashMap<String, MutableSet<WebSocketSession>>()
 
     fun start(attachment: ContainerAttachmentManager.ContainerAttachment) {
         val pumper = attachments.get(attachment.serverId)
@@ -34,5 +37,17 @@ class ConsolePump {
 
     private fun sendToWS(serverId: UUID, line: String) {
         logger.debug("{} --- {}", serverId, line)
+        val message = TextMessage(line)
+        sessions.get(serverId.toString())?.forEach { session -> session.sendMessage(message) }
     }
+
+    fun register(serverId: String, session: WebSocketSession) {
+        sessions.getOrPut(serverId) { ConcurrentHashMap.newKeySet() }.add(session)
+    }
+
+    fun unregister(serverId: String, session: WebSocketSession) {
+        sessions[serverId]?.remove(session)
+    }
+
+    fun getSessions(serverId: String): Set<WebSocketSession> = sessions[serverId] ?: emptySet()
 }
