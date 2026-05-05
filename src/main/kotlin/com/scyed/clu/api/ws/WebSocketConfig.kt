@@ -14,7 +14,9 @@ import org.springframework.web.socket.server.support.HttpSessionHandshakeInterce
 @EnableWebSocket
 class WebSocketConfig(val consolePump: ConsolePump) : WebSocketConfigurer {
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(consoleWSHandler(), "/v1/ws/console/{serverId}").addInterceptors(HttpSessionHandshakeInterceptor())
+        registry.addHandler(consoleWSHandler(), "/v1/ws/console/{serverId}")
+            .addInterceptors(HttpSessionHandshakeInterceptor())
+            .setAllowedOriginPatterns("*")
     }
 
     @Bean

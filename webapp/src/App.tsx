@@ -1,6 +1,7 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from "react-router"
 import { Server } from "lucide-react"
 import { ServersPage } from "@/pages/ServersPage"
+import { ServerDetailPage } from "@/pages/ServerDetailPage"
 
 const TOOLS = [
   { path: "/servers", label: "Servers", icon: Server, component: ServersPage },
@@ -35,18 +36,18 @@ export function App() {
         </aside>
 
         <main className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-2xl">
-            <Routes>
-              <Route index element={<Navigate to="/servers" replace />} />
-              {TOOLS.map((tool) => (
-                <Route
-                  key={tool.path}
-                  path={tool.path}
-                  element={<tool.component />}
-                />
-              ))}
-            </Routes>
-          </div>
+          <Routes>
+            <Route index element={<Navigate to="/servers" replace />} />
+            <Route
+              path="/servers"
+              element={
+                <div className="mx-auto max-w-2xl">
+                  <ServersPage />
+                </div>
+              }
+            />
+            <Route path="/servers/:serverId" element={<ServerDetailPage />} />
+          </Routes>
         </main>
       </div>
     </BrowserRouter>

@@ -27,6 +27,7 @@ export default defineConfig({
       "/v1": {
         target: "http://localhost:8080",
         changeOrigin: true,
+        ws: true,
         // Let Vite serve the React app itself; proxy everything else to Spring.
         bypass: (req) => {
           if (req.url?.startsWith("/v1/webApp")) return req.url
