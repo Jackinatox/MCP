@@ -1,27 +1,37 @@
 #!/bin/ash
-# Vanilla MC Installation Script
-#
-# Server Files: /mnt/server
-mkdir -p /mnt/server
-cd /mnt/server
+# Test Egg Installation Script
+# Server Files: /home/container
 
-LATEST_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.release'`
-LATEST_SNAPSHOT_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.snapshot'`
+mkdir -p /home/container
+cd /home/container
 
-echo -e "latest version is $LATEST_VERSION"
-echo -e "latest snapshot is $LATEST_SNAPSHOT_VERSION"
+echo "Downloading test server..."
 
-if [ -z "$MINECRAFT_VERSION" ] || [ "$MINECRAFT_VERSION" == "latest" ]; then
-  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')
-elif [ "$MINECRAFT_VERSION" == "snapshot" ]; then
-  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_SNAPSHOT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')
-else
-  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $MINECRAFT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')
-fi
+for i in $(seq 1 10); do
+  echo "Installing... step $i/10"
+  sleep 1
+done
 
-DOWNLOAD_URL=$(curl ${MANIFEST_URL} | jq .downloads.server | jq -r '. | .url')
+cat > /home/container/server.py << 'EOF'
+import http.server
+import os
 
-echo -e "running: curl -o ${SERVER_JARFILE} $DOWNLOAD_URL"
-curl -o ${SERVER_JARFILE} $DOWNLOAD_URL
+port = int(os.environ.get("SERVER_PORT", 8080))
 
-echo -e "Install Complete"
+class Handler(http.server.BaseHTTPRequestHandler):
+    def do_GET(self):
+        body = b"Hello, World!\n"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, format, *args):
+        print(f"[{self.address_string()}] {format % args}", flush=True)
+
+print(f"Starting Hello World HTTP server on port {port}", flush=True)
+http.server.HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+EOF
+
+echo "Installation complete."

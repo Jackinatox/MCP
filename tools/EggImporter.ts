@@ -1,4 +1,4 @@
-import data from "../eggs/egg.json";
+import data from "../eggs/python_server.json";
 
 const file = Bun.file("./script.sh");
 
@@ -16,4 +16,4 @@ const newData = {
 };
 
 
-Bun.write("./egg.json", JSON.stringify(newData, null, 2));
+Bun.write("./python_server.json", JSON.stringify(newData, null, 2));

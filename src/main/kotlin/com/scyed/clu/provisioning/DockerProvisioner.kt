@@ -53,7 +53,7 @@ class DockerProvisioner(
     private val consolePump: ConsolePump
 ) {
     private final val installScriptName = "install.sh"
-    private final val gameserverPathInContainer = "/mnt/server"
+    private final val gameserverPathInContainer = "/home/container"
     private final val installScriptPathInContainer = "/mnt/installScript"
     private val log = LoggerFactory.getLogger(javaClass)
 
