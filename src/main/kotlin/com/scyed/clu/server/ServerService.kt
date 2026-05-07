@@ -3,10 +3,8 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
-import com.scyed.clu.provisioning.ContainerAttachmentManager
+import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
-import com.scyed.clu.server.event.KillServerRequested
-import com.scyed.clu.server.event.ServerPowerRequested
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
@@ -21,7 +19,8 @@ class ServerService(
     private val glyphRepository: GlyphRepository,
     private val glyphEnvVarValidator: GlyphEnvVarValidator,
     private val eventPublisher: ApplicationEventPublisher,
-    private val provisioner: DockerProvisioner
+    private val provisioner: DockerProvisioner,
+    private val containerService: ContainerService,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -71,19 +70,55 @@ class ServerService(
         if (!forceStop && server.status != ServerStatus.STOPPED) throw ResponseStatusException(
             HttpStatus.BAD_REQUEST, "Server must be stopped to reinstall or use forceStop=true"
         )
-        provisioner.killAndRemoveServer(KillServerRequested(server))
+
+        if (server.containerId != null) {
+            killServer(server)
+        }
+
         log.info("Queuing reinstall for server $serverId")
         eventPublisher.publishEvent(ServerReinstallRequested(serverId))
     }
 
     fun powerAction(serverId: UUID, action: PowerAction) {
-        serverRepository.findById(serverId).orElseThrow {
-            ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found")
+        val server = serverRepository.findWithGlyphById(serverId)
+
+        requireNotNull(server) { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
+
+        when (action) {
+            PowerAction.START -> startServer(server)
+            PowerAction.STOP -> stopServer(server)
+            PowerAction.KILL -> killServer(server)
+            PowerAction.RESTART -> {
+                stopServer(server)
+                startServer(server)
+            }
         }
-        eventPublisher.publishEvent(ServerPowerRequested(serverId, action, TriggeredBy.USER))
     }
 
-    fun snycStateFromContainer(serverId: UUID){
-        val server = serverRepository.findById(serverId)
+    private fun startServer(server: ServerEntity) {
+        log.info("Starting ${server.id}")
+        provisioner.startServer(server)
+    }
+
+    private fun stopServer(server: ServerEntity) {
+        if (server.containerId == null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "No container to stop for server ${server.id}")
+        }
+        containerService.stopContainer(server.id!!, server.containerId!!)
+        server.status = ServerStatus.STOPPED
+        serverRepository.save(server)
+        log.info("Server ${server.id} stopped")
+    }
+
+    private fun killServer(server: ServerEntity) {
+        if (server.containerId == null) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "No container to kill for server ${server.id}")
+        }
+        containerService.stopContainer(server.id!!, server.containerId!!)
+        containerService.removeContainer(server.containerId!!)
+        server.containerId = null
+        server.status = ServerStatus.STOPPED
+        serverRepository.save(server)
+        log.info("Server ${server.id} killed and container removed")
     }
 }
