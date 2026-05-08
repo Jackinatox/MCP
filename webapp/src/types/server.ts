@@ -17,11 +17,12 @@ export interface GlyphSummary {
 export type ServerStatus =
   | "PROVISIONING"
   | "INSTALLING"
-  | "IDLE"
-  | "RUNNING"
+  | "STARTED"
+  | "STARTING"
   | "STOPPED"
+  | "STOPPING"
   | "ERROR"
-  | "TRANSFERING_LOCKED"
+  | "TRANSFERRING_LOCKED"
 
 export interface ServerEntity {
   id: string
@@ -45,11 +46,12 @@ export interface ServerResponse {
 }
 
 export const STATUS_COLORS: Record<ServerStatus, string> = {
-  RUNNING: "bg-green-500",
-  IDLE: "bg-blue-400",
+  STARTED: "bg-green-500",
+  STARTING: "bg-yellow-400",
   STOPPED: "bg-gray-400",
+  STOPPING: "bg-orange-400",
   ERROR: "bg-red-500",
   PROVISIONING: "bg-yellow-400",
   INSTALLING: "bg-orange-400",
-  TRANSFERING_LOCKED: "bg-purple-400",
+  TRANSFERRING_LOCKED: "bg-purple-400",
 }

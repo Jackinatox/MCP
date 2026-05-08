@@ -1,8 +1,9 @@
 package com.scyed.clu.server
 
-import kotlin.jvm.Throws
+import com.fasterxml.jackson.annotation.JsonValue
 
 class ServerState(status: ServerStatus) {
+    @get:JsonValue
     var status: ServerStatus = status
         private set
 
@@ -17,7 +18,7 @@ class ServerState(status: ServerStatus) {
 
     @Throws(BadServerStateException::class)
     fun stop() {
-        if (this.status in arrayOf(ServerStatus.STOPPING, ServerStatus.STOPPED))   {
+        if (this.status in arrayOf(ServerStatus.STOPPING, ServerStatus.STOPPED)) {
             throw BadServerStateException(status, ServerStatus.STOPPING, "Server is already stopped/stopping")
         }
 
@@ -43,7 +44,12 @@ class ServerState(status: ServerStatus) {
 
     @Throws(BadServerStateException::class)
     fun kill() {
-        if (this.status in arrayOf(ServerStatus.INSTALLING, ServerStatus.TRANSFERRING_LOCKED, ServerStatus.PROVISIONING)) {
+        if (this.status in arrayOf(
+                ServerStatus.INSTALLING,
+                ServerStatus.TRANSFERRING_LOCKED,
+                ServerStatus.PROVISIONING
+            )
+        ) {
             throw BadServerStateException(status, ServerStatus.STARTED, "Server is busy")
         }
 
