@@ -31,6 +31,9 @@ dependencies {
     implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("com.github.docker-java:docker-java-core:3.7.1")
     implementation("com.github.docker-java:docker-java-transport-httpclient5:3.7.1")
+    implementation("org.springframework.boot:spring-boot-h2console")
+    implementation("org.xerial:sqlite-jdbc:3.49.1.0")
+    implementation("org.hibernate.orm:hibernate-community-dialects:6.6.13.Final")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")

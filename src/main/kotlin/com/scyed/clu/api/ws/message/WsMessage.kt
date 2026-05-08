@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes(
-    JsonSubTypes.Type(ConsoleMessage::class, name = "console"),
-    JsonSubTypes.Type(StatsMessage::class,   name = "stats"),
+    JsonSubTypes.Type(ConsoleMessage::class, name = "console_output"),
+    JsonSubTypes.Type(StatsMessage::class,   name = "server_stats"),
 )
 sealed class WsMessage
 

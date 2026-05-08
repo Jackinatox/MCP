@@ -67,7 +67,7 @@ export function ServerDetailPage() {
       try {
         const data = JSON.parse(event.data) as Record<string, unknown>
         if (data.type === "console_output") {
-          const line = typeof data.data === "string" ? data.data : event.data
+          const line = typeof data.message === "string" ? data.message : event.data
           setConsoleLines((prev) => [...prev, line])
         } else {
           setEventLines((prev) => [...prev, JSON.stringify(data, null, 2)])
