@@ -98,7 +98,7 @@ class ContainerService(
     fun removeContainer(containerId: String) {
         log.info("Removing container $containerId")
         try {
-            docker.removeContainerCmd(containerId).exec()
+            docker.removeContainerCmd(containerId).withForce(true).exec()
         } catch (e: Exception) {
             log.error("Failed to remove container $containerId: ${e.message}")
         }

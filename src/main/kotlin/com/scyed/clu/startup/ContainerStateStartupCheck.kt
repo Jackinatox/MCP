@@ -2,6 +2,7 @@ package com.scyed.clu.startup
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.exception.NotFoundException
+import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
 import com.scyed.clu.server.ServerState
@@ -11,7 +12,9 @@ import org.springframework.stereotype.Component
 
 @Component
 class ContainerStateStartupCheck(
-    private val dockerClient: DockerClient, private val serverRepository: ServerRepository
+    private val dockerClient: DockerClient,
+    private val serverRepository: ServerRepository,
+    private val containerService: ContainerService
 ) : StartupCheck {
     private val log = LoggerFactory.getLogger(javaClass)
     override val name: String = "ContainerStateStartupCheck"
@@ -28,35 +31,39 @@ class ContainerStateStartupCheck(
         servers.forEach { server ->
             val newStatus = resolveStatus(server)
 
-            if (newStatus != null && newStatus != server.status) {
-                server.status = newStatus
-                if (newStatus.status == ServerStatus.STOPPED) server.containerId = null
-                log.info("New container Status: $newStatus - ${server.id}")
-                serverRepository.save(server)
-            }
+            server.status = ServerState(newStatus.state)
+            server.containerId = newStatus.cid
+            log.info("New container Status: ${newStatus.state} - ${server.id}")
+            serverRepository.save(server)
         }
     }
 
-    private fun resolveStatus(server: ServerEntity): ServerState {
+    private fun resolveStatus(server: ServerEntity): ServerStateCheck {
         log.trace("Resolving container state for ${server.id}")
         val cid = server.containerId
 
-        // server was mid-install when app crashed — install did not complete
-        if (server.status.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
-            return ServerState(ServerStatus.ERROR)
-        }
-
         if (cid.isNullOrBlank()) {
-            return ServerState(ServerStatus.STOPPED)
+            return ServerStateCheck(ServerStatus.STOPPED, null)
 //            throw RuntimeException("Container cid not set during startup check for server ${server.name} - ${server.id}")
         }
 
+        // server was mid-install when app crashed — install did not complete
+        if (server.status.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
+            containerService.removeContainer(cid)
+            return ServerStateCheck(ServerStatus.ERROR, null)
+        }
+
+
         return try {
             val state = dockerClient.inspectContainerCmd(cid).exec().state
-            if (state?.running == true) ServerState(ServerStatus.STARTED) else ServerState(ServerStatus.STOPPED)
+            if (state?.running == true) ServerStateCheck(
+                ServerStatus.STOPPED, cid
+            ) else ServerStateCheck(ServerStatus.STARTED, cid)
         } catch (e: NotFoundException) {
-            ServerState(ServerStatus.STOPPED) // container gone, mark stopped + clear containerId
+            return ServerStateCheck(ServerStatus.STOPPED, null) // container gone, mark stopped + clear containerId
         }
     }
+
+    data class ServerStateCheck(val state: ServerStatus, val cid: String?)
 
 }
