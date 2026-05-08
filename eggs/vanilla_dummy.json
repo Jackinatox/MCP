@@ -8,11 +8,7 @@
   "name": "Vanilla Minecraft (Dummy)",
   "author": "test@scyed.com",
   "description": "A test Minecraft egg used to verify Egg and EggProvider parsing.",
-  "features": [
-    "eula",
-    "java_version",
-    "pid_limit"
-  ],
+  "features": ["eula", "java_version", "pid_limit"],
   "docker_images": {
     "Java 25": "ghcr.io/pterodactyl/yolks:java_25",
     "Java 21": "ghcr.io/pterodactyl/yolks:java_21"
@@ -27,7 +23,7 @@
   },
   "scripts": {
     "installation": {
-      "script": "#!/bin/ash\n# Vanilla MC Installation Script\n#\n# Server Files: /mnt/server\nmkdir -p /mnt/server\ncd /mnt/server\n\nLATEST_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.release'`\nLATEST_SNAPSHOT_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.snapshot'`\n\necho -e \"latest version is $LATEST_VERSION\"\necho -e \"latest snapshot is $LATEST_SNAPSHOT_VERSION\"\n\nif [ -z \"$MINECRAFT_VERSION\" ] || [ \"$MINECRAFT_VERSION\" == \"latest\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelif [ \"$MINECRAFT_VERSION\" == \"snapshot\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_SNAPSHOT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelse\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $MINECRAFT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nfi\n\nDOWNLOAD_URL=$(curl ${MANIFEST_URL} | jq .downloads.server | jq -r '. | .url')\n\necho -e \"running: curl -o ${SERVER_JARFILE} $DOWNLOAD_URL\"\ncurl -o ${SERVER_JARFILE} $DOWNLOAD_URL\n\necho -e \"Install Complete\"",
+      "script": "#!/bin/ash\n# Vanilla MC Installation Script\n#\n# Server Files: /home/container\nmkdir -p /home/container\ncd /home/container\n\nLATEST_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.release'`\nLATEST_SNAPSHOT_VERSION=`curl https://launchermeta.mojang.com/mc/game/version_manifest.json | jq -r '.latest.snapshot'`\n\necho -e \"latest version is $LATEST_VERSION\"\necho -e \"latest snapshot is $LATEST_SNAPSHOT_VERSION\"\n\nif [ -z \"$MINECRAFT_VERSION\" ] || [ \"$MINECRAFT_VERSION\" == \"latest\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelif [ \"$MINECRAFT_VERSION\" == \"snapshot\" ]; then\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $LATEST_SNAPSHOT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nelse\n  MANIFEST_URL=$(curl -sSL https://launchermeta.mojang.com/mc/game/version_manifest.json | jq --arg VERSION $MINECRAFT_VERSION -r '.versions | .[] | select(.id== $VERSION )|.url')\nfi\n\nDOWNLOAD_URL=$(curl ${MANIFEST_URL} | jq .downloads.server | jq -r '. | .url')\n\necho -e \"running: curl -o ${SERVER_JARFILE} $DOWNLOAD_URL\"\ncurl -o ${SERVER_JARFILE} $DOWNLOAD_URL\n\necho -e \"Install Complete\"",
       "container": "ghcr.io/pterodactyl/installers:alpine",
       "entrypoint": "bash"
     }

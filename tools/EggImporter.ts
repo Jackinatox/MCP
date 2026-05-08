@@ -1,4 +1,4 @@
-import data from "../eggs/python_server.json";
+import data from "../eggs/vanilla_dummy.json";
 
 const file = Bun.file("./script.sh");
 

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import { Plus, X, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import type { GlyphSummary } from "@/types/server"
+import type { GlyphSummary } from "@/types/glyph"
 
 interface CreateServerFields {
   name: string

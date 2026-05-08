@@ -21,7 +21,7 @@ class GlobalExceptionHandler {
 
     @ExceptionHandler(ServerState.BadServerStateException::class)
     fun handleServerStatusException(ex: ServerState.BadServerStateException): ResponseEntity<Map<String, String>> {
-        return ResponseEntity.badRequest().body(mapOf("error" to ex.message!!))
+        return ResponseEntity.badRequest().body(mapOf("message" to ex.message!!))
     }
 
 
