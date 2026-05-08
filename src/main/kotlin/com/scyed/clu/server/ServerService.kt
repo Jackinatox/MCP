@@ -11,7 +11,7 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import java.util.UUID
+import java.util.*
 
 @Service
 class ServerService(
@@ -29,8 +29,7 @@ class ServerService(
 
     fun createServer(request: CreateServerRequest): ServerEntity {
         if (serverRepository.existsByName(request.name)) throw ResponseStatusException(
-            HttpStatus.BAD_REQUEST,
-            "Name is already taken"
+            HttpStatus.BAD_REQUEST, "Name is already taken"
         )
 
         val glyph = glyphRepository.findById(request.glyphId).orElseThrow {
@@ -45,17 +44,16 @@ class ServerService(
 
         val server = serverRepository.save(
             ServerEntity(
-                request.name,
-                request.description,
-                "",
-                request.imageName,
-                ServerStatus.PROVISIONING,
-                false,
-                request.memoryMb,
-                request.cpuPercent,
-                request.env,
-                request.startCommand ?: glyph.startup,
-                glyph,
+                name = request.name,
+                description = request.description,
+                containerId = "",
+                image = request.imageName,
+                skip_scripts = false,
+                memoryMb = request.memoryMb,
+                cpuPercent = request.cpuPercent,
+                env = request.env,
+                startCommand = request.startCommand ?: glyph.startup,
+                glyphEntity = glyph,
             )
         )
         log.info("Created server ${server.name} id=${server.id}")
@@ -67,7 +65,7 @@ class ServerService(
         val server = serverRepository.findById(serverId).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found")
         }
-        if (!forceStop && server.status != ServerStatus.STOPPED) throw ResponseStatusException(
+        if (!forceStop && server.status.status != ServerStatus.STOPPED) throw ResponseStatusException(
             HttpStatus.BAD_REQUEST, "Server must be stopped to reinstall or use forceStop=true"
         )
 
@@ -85,27 +83,25 @@ class ServerService(
         requireNotNull(server) { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
 
         when (action) {
-            PowerAction.START -> startServer(server)
+            PowerAction.START -> {
+                provisioner.startServer(server)
+            }
+
             PowerAction.STOP -> stopServer(server)
             PowerAction.KILL -> killServer(server)
-            PowerAction.RESTART -> {
-                stopServer(server)
-                startServer(server)
-            }
+            else -> log.error("Unexpected action $action")
         }
-    }
-
-    private fun startServer(server: ServerEntity) {
-        log.info("Starting ${server.id}")
-        provisioner.startServer(server)
     }
 
     private fun stopServer(server: ServerEntity) {
+        // If somehow bugged and now conatinerId, just set the status to stopped
         if (server.containerId == null) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "No container to stop for server ${server.id}")
+            log.warn("Server ${server.id} wasnt stopped but didnt had a container id")
+        } else {
+            containerService.stopContainer(server.id!!, server.containerId!!)
+            server.containerId = null
         }
-        containerService.stopContainer(server.id!!, server.containerId!!)
-        server.status = ServerStatus.STOPPED
+        server.status.stop()
         serverRepository.save(server)
         log.info("Server ${server.id} stopped")
     }
@@ -114,11 +110,17 @@ class ServerService(
         if (server.containerId == null) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "No container to kill for server ${server.id}")
         }
-        containerService.stopContainer(server.id!!, server.containerId!!)
-        containerService.removeContainer(server.containerId!!)
-        server.containerId = null
-        server.status = ServerStatus.STOPPED
-        serverRepository.save(server)
-        log.info("Server ${server.id} killed and container removed")
+        server.status.kill()
+        try {
+            // TODO: Proper kill
+            containerService.stopContainer(server.id!!, server.containerId!!)
+            containerService.removeContainer(server.containerId!!)
+            server.containerId = null
+            log.info("Server ${server.id} killed and container removed")
+        } catch (e: Exception) {
+            log.error("Failed to kill Server ${server.id}")
+        } finally {
+            serverRepository.save(server)
+        }
     }
 }

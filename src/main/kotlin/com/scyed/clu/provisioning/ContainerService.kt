@@ -61,6 +61,7 @@ class ContainerService(
             .withName(server.id.toString())
             .withHostConfig(
                 HostConfig.newHostConfig()
+                    .withAutoRemove(true)   // Automaticly remove Install container
                     .withCpuPercent(server.cpuPercent)
                     .withMemory(server.memoryMb * 1024L * 1024L)
                     .withSecurityOpts(listOf("no-new-privileges"))

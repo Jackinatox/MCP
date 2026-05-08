@@ -4,6 +4,7 @@ import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.server.PowerAction
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerService
+import com.scyed.clu.server.ServerState
 import com.scyed.clu.server.ServerStatus
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*

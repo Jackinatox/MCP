@@ -4,6 +4,7 @@ import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.exception.NotFoundException
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
+import com.scyed.clu.server.ServerState
 import com.scyed.clu.server.ServerStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -29,32 +30,32 @@ class ContainerStateStartupCheck(
 
             if (newStatus != null && newStatus != server.status) {
                 server.status = newStatus
-                if (newStatus == ServerStatus.STOPPED) server.containerId = null
+                if (newStatus.status == ServerStatus.STOPPED) server.containerId = null
                 log.info("New container Status: $newStatus - ${server.id}")
                 serverRepository.save(server)
             }
         }
     }
 
-    private fun resolveStatus(server: ServerEntity): ServerStatus {
+    private fun resolveStatus(server: ServerEntity): ServerState {
         log.trace("Resolving container state for ${server.id}")
         val cid = server.containerId
 
         // server was mid-install when app crashed — install did not complete
-        if (server.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
-            return ServerStatus.ERROR
+        if (server.status.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
+            return ServerState(ServerStatus.ERROR)
         }
 
         if (cid.isNullOrBlank()) {
-            return ServerStatus.STOPPED
+            return ServerState(ServerStatus.STOPPED)
 //            throw RuntimeException("Container cid not set during startup check for server ${server.name} - ${server.id}")
         }
 
         return try {
             val state = dockerClient.inspectContainerCmd(cid).exec().state
-            if (state?.running == true) ServerStatus.RUNNING else ServerStatus.STOPPED
+            if (state?.running == true) ServerState(ServerStatus.STARTED) else ServerState(ServerStatus.STOPPED)
         } catch (e: NotFoundException) {
-            ServerStatus.STOPPED  // container gone, mark stopped + clear containerId
+            ServerState(ServerStatus.STOPPED) // container gone, mark stopped + clear containerId
         }
     }
 

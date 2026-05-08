@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.Frame
 import com.scyed.clu.glyph.toDto
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
+import com.scyed.clu.server.ServerState
 import com.scyed.clu.server.ServerStatus
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
@@ -67,36 +68,37 @@ class DockerProvisioner(
                 installScriptName,
             )
 
-            server.containerId = container.id
-            server.status = ServerStatus.INSTALLING
+            server.containerId = null
+            server.status.install()
             server = serverRepository.save(server)
 
             containerService.startContainer(container.id)
-            log.info("Started install container: ${server.containerId}")
+            log.info("Started install container: ${container.id}")
 
-            val logCallback = streamLogsToFile(container.id, installScript.parent.resolve("install.log"))
-            val waitCallback = WaitContainerResultCallback()
-            docker.waitContainerCmd(container.id).exec(waitCallback)
-            log.debug("Waiting for install to finish: ${server.containerId}")
-            val exitCode = waitCallback.awaitStatusCode()
+            val logfileCallback = streamLogsToFile(container.id, installScript.parent.resolve("install.log"))
+            val installFinishedCallback = WaitContainerResultCallback()
+            docker.waitContainerCmd(container.id).exec(installFinishedCallback)
+            log.debug("Waiting for install to finish: ${container.id}")
+            val exitCode = installFinishedCallback.awaitStatusCode()
 
-            log.info("Installer finished exitcode: $exitCode")
+            log.info("Installer finished for ${container.id} exitcode: $exitCode")
 
-            logCallback.awaitCompletion()
-            logCallback.close()
+            logfileCallback.awaitCompletion()
+            logfileCallback.close()
             log.info("Logfile closed")
 
-            server.status = ServerStatus.IDLE
+            server.status = ServerState(ServerStatus.STOPPED)
             server = serverRepository.save(server)
 
         } catch (e: Exception) {
             log.error("Provisioning failed for server ${server.id}", e)
-            server.status = ServerStatus.ERROR
+            server.status.error()
             serverRepository.save(server)
         }
     }
 
     fun startServer(server: ServerEntity) {
+        server.status.start()
         if (server.containerId != null) {
             containerService.startExistingContainer(server.id!!, server.containerId!!)
             log.info("Restarted existing container ${server.containerId}")
@@ -107,7 +109,7 @@ class DockerProvisioner(
             log.info("Created new game server container ${container.id}")
             server.containerId = container.id
         }
-        server.status = ServerStatus.RUNNING
+
         serverRepository.save(server)
     }
 

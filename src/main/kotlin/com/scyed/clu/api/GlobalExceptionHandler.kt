@@ -1,5 +1,6 @@
 package com.scyed.clu.api
 
+import com.scyed.clu.server.ServerState
 import org.springframework.http.HttpStatus
 import org.springframework.validation.FieldError
 import org.springframework.web.bind.MethodArgumentNotValidException
@@ -16,4 +17,12 @@ class GlobalExceptionHandler {
         ex.bindingResult.allErrors.associate { error ->
             (error as FieldError).field to error.defaultMessage
         }
+
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(ServerState.BadServerStateException::class)
+    fun handleServerStatusException(ex: ServerState.BadServerStateException): String =
+            ex.message!!
+
+
+
 }

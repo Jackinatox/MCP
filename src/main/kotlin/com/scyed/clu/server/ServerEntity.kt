@@ -2,11 +2,10 @@ package com.scyed.clu.server
 
 import com.scyed.clu.glyph.GlyphEntity
 import com.scyed.clu.infra.persistence.converter.EnvMapConverter
+import com.scyed.clu.infra.persistence.converter.ServerStatusConverter
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -23,7 +22,7 @@ class ServerEntity(
     var description: String?,
     var containerId: String?,
     var image: String = "",
-    @Enumerated(EnumType.STRING) var status: ServerStatus = ServerStatus.PROVISIONING,
+    @Convert(converter = ServerStatusConverter::class) var status: ServerState = ServerState(ServerStatus.PROVISIONING),
     var skip_scripts: Boolean = false,
     var memoryMb: Long,
     var cpuPercent: Long,
