@@ -1,6 +1,6 @@
 package com.scyed.clu.infra.event
 
-import org.springframework.stereotype.Component
+import com.scyed.clu.server.ServerStatus
 import java.util.UUID
 
 sealed class ContainerEvent {
@@ -9,4 +9,5 @@ sealed class ContainerEvent {
     data class ConsoleLine(override val serverId: UUID, val line: String) : ContainerEvent()
     data class ServerStats(override val serverId: UUID, val cpuPercent: Double, val memoryMIB: Int) : ContainerEvent()
     data class Detached(override val serverId: UUID, val containerId: String) : ContainerEvent()
+    data class ServerStatusChanged(override val serverId: UUID, val newStatus: ServerStatus) : ContainerEvent()
 }

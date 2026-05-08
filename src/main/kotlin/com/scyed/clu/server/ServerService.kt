@@ -3,6 +3,8 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
+import com.scyed.clu.infra.event.ContainerEvent
+import com.scyed.clu.infra.event.ContainerEventBus
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
 import com.scyed.clu.server.event.ServerReinstallRequested
@@ -21,6 +23,7 @@ class ServerService(
     private val eventPublisher: ApplicationEventPublisher,
     private val provisioner: DockerProvisioner,
     private val containerService: ContainerService,
+    private val bus: ContainerEventBus
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -57,7 +60,7 @@ class ServerService(
             )
         )
         log.info("Created server ${server.name} id=${server.id}")
-        eventPublisher.publishEvent(ServerReinstallRequested(requireNotNull(server.id) { "Server ID was null after save" }))
+        eventPublisher.publishEvent(ServerReinstallRequested(server.id!!))
         return server
     }
 
@@ -97,11 +100,13 @@ class ServerService(
         // If somehow bugged and now conatinerId, just set the status to stopped
         if (server.containerId == null) {
             log.warn("Server ${server.id} wasnt stopped but didnt had a container id")
-        } else {
-            containerService.stopContainer(server.id!!, server.containerId!!)
-            server.containerId = null
         }
         server.status.stop()
+        bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPING))
+        containerService.stopContainer(server.id!!, server.containerId!!)
+        server.containerId = null
+        bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPED))
+
         serverRepository.save(server)
         log.info("Server ${server.id} stopped")
     }
