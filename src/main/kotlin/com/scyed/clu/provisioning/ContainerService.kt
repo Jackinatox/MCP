@@ -6,7 +6,6 @@ import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.Volume
-import com.scyed.clu.console.ConsolePump
 import com.scyed.clu.server.ServerEntity
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -19,7 +18,6 @@ class ContainerService(
     private val docker: DockerClient,
     private val properties: GameserverProperties,
     private val containerAttachmentManager: ContainerAttachmentManager,
-    private val consolePump: ConsolePump,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val gameserverPathInContainer = "/home/container"
@@ -41,8 +39,7 @@ class ContainerService(
             .withCmd("/bin/sh", "-c", startup)
             .exec()
 
-        val attachment = containerAttachmentManager.attach(server.id!!, container.id)
-        consolePump.start(attachment)
+        containerAttachmentManager.attach(server.id!!, container.id)
 
         docker.startContainerCmd(container.id).exec()
         log.info("Created and started container ${container.id} for server ${server.id}")
@@ -86,7 +83,6 @@ class ContainerService(
     fun stopContainer(serverId: UUID, containerId: String) {
         log.info("Stopping container $containerId")
         try {
-            consolePump.stop(serverId)
             containerAttachmentManager.detach(serverId)
             docker.killContainerCmd(containerId).exec()
             log.info("Stopped container $containerId")
@@ -107,8 +103,7 @@ class ContainerService(
 
     fun startExistingContainer(serverId: UUID, containerId: String) {
         docker.startContainerCmd(containerId).exec()
-        val attachment = containerAttachmentManager.attach(serverId, containerId)
-        consolePump.start(attachment)
+        containerAttachmentManager.attach(serverId, containerId)
         log.info("Started existing container $containerId for server $serverId")
     }
 

@@ -2,46 +2,35 @@ package com.scyed.clu.console
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.scyed.clu.api.ws.message.ConsoleMessage
-import com.scyed.clu.provisioning.ContainerAttachmentManager
+import com.scyed.clu.infra.event.ContainerEvent
+import com.scyed.clu.infra.event.ContainerEventBus
+import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.thread
 
 @Component
-class ConsolePump() {
-    private final val logger = LoggerFactory.getLogger(javaClass)
-    private final val objectMapper = ObjectMapper()
-    private val attachments = ConcurrentHashMap<UUID, Thread>()
+class ConsolePump(private val bus: ContainerEventBus) {
+    private val logger = LoggerFactory.getLogger(javaClass)
+    private val objectMapper = ObjectMapper()
     private val sessions = ConcurrentHashMap<String, MutableSet<WebSocketSession>>()
 
-    fun start(attachment: ContainerAttachmentManager.ContainerAttachment) {
-        val pumper = attachments.get(attachment.serverId)
-        if (pumper != null) {
-            if (pumper.isAlive) {
-                pumper.interrupt()
-                attachments.remove(attachment.serverId)
+    @PostConstruct
+    fun init() {
+        bus.subscribe(ContainerEventBus.GLOBAL) { event ->
+            if (event is ContainerEvent.ConsoleLine) {
+                sendToWS(event.serverId, event.line)
             }
         }
-        attachments[attachment.serverId] = thread(
-            start = true, isDaemon = true, name = "console-pump-${attachment.serverId}", priority = -1, block = {
-                attachment.stdout.bufferedReader(Charsets.UTF_8).forEachLine { line ->
-                    sendToWS(attachment.serverId, line)
-                }
-            })
-    }
-
-    fun stop(serverId: UUID) {
-        attachments.remove(serverId)?.interrupt()
     }
 
     private fun sendToWS(serverId: UUID, line: String) {
         logger.debug("{} --- {}", serverId, line)
         val message = TextMessage(objectMapper.writeValueAsString(ConsoleMessage(line)))
-        sessions.get(serverId.toString())?.forEach { session -> session.sendMessage(message) }
+        sessions[serverId.toString()]?.forEach { session -> session.sendMessage(message) }
     }
 
     fun register(serverId: String, session: WebSocketSession) {

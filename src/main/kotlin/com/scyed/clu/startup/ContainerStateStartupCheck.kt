@@ -33,7 +33,7 @@ class ContainerStateStartupCheck(
 
             server.status = ServerState(newStatus.state)
             server.containerId = newStatus.cid
-            log.info("New container Status: ${newStatus.state} - ${server.id}")
+            log.info("New container Status: ${newStatus.state} - ${server.id} id: ${server.containerId}")
             serverRepository.save(server)
         }
     }
@@ -49,6 +49,7 @@ class ContainerStateStartupCheck(
 
         // server was mid-install when app crashed — install did not complete
         if (server.status.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
+            log.warn("Removing container cause it was ${server.status.status}")
             containerService.removeContainer(cid)
             return ServerStateCheck(ServerStatus.ERROR, null)
         }
@@ -57,8 +58,8 @@ class ContainerStateStartupCheck(
         return try {
             val state = dockerClient.inspectContainerCmd(cid).exec().state
             if (state?.running == true) ServerStateCheck(
-                ServerStatus.STOPPED, cid
-            ) else ServerStateCheck(ServerStatus.STARTED, cid)
+                ServerStatus.STARTED, cid
+            ) else ServerStateCheck(ServerStatus.STOPPED, cid)
         } catch (e: NotFoundException) {
             return ServerStateCheck(ServerStatus.STOPPED, null) // container gone, mark stopped + clear containerId
         }
