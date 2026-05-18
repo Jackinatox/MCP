@@ -1,4 +1,4 @@
-package com.scyed.clu.console
+package com.scyed.clu.api.ws
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.scyed.clu.api.ws.message.ConsoleMessage
@@ -11,11 +11,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 @Component
-class ConsolePump(private val bus: ContainerEventBus) {
+class WSEventPump(private val bus: ContainerEventBus) {
     private val logger = LoggerFactory.getLogger(javaClass)
     private val objectMapper = ObjectMapper()
     private val sessions = ConcurrentHashMap<String, MutableSet<WebSocketSession>>()

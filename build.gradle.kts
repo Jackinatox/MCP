@@ -34,6 +34,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-h2console")
     implementation("org.xerial:sqlite-jdbc:3.49.1.0")
     implementation("org.hibernate.orm:hibernate-community-dialects:6.6.13.Final")
+    // Source: https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webmvc-ui
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
