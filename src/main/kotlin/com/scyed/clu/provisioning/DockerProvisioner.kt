@@ -108,10 +108,13 @@ class DockerProvisioner(
             val container = containerService.createAndStartGameServer(server, startup)
             log.info("Created new game server container ${container.id}")
             server.containerId = container.id
-            serverRepository.save(server)
+            // Bulk update — don't save(entity), which would flush stale status and race
+            // the waitCallback's STOPPED/ERROR publish for containers that exit immediately.
+            serverRepository.updateContainerId(server.id!!, container.id)
         }
 
-        transitions.started(server) // TODO: Console listener that sets server to started when some line is found
+        // STARTED is published by the console listener once a readiness line is detected;
+        // if the container exits before that, ContainerAttachmentManager publishes STOPPED/ERROR.
     }
 
     private fun createInstallScript(serverId: String, script: String): Path {

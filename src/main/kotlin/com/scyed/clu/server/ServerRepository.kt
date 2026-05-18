@@ -16,5 +16,10 @@ interface ServerRepository : CrudRepository<ServerEntity, UUID> {
     @Transactional
     @Modifying
     @Query("UPDATE ServerEntity s SET s.status = :status WHERE s.id = :id")
-    fun updateStatus(id: UUID, status: ServerStatus)
+    fun updateStatus(id: UUID, status: ServerState)
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE ServerEntity s SET s.containerId = :containerId WHERE s.id = :id")
+    fun updateContainerId(id: UUID, containerId: String?)
 }

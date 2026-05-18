@@ -114,8 +114,7 @@ class ServerService(
             // TODO: Proper kill
             containerService.stopContainer(server.id!!, server.containerId!!)
             containerService.removeContainer(server.containerId!!)
-            server.containerId = null
-            serverRepository.save(server)
+
             log.info("Server ${server.id} killed and container removed")
         } catch (e: Exception) {
             log.error("Failed to kill Server ${server.id}")

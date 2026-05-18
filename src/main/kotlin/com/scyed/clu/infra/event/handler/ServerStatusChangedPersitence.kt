@@ -3,6 +3,7 @@ package com.scyed.clu.infra.event.handler
 import com.scyed.clu.infra.event.ContainerEvent
 import com.scyed.clu.infra.event.ContainerEventBus
 import com.scyed.clu.server.ServerRepository
+import com.scyed.clu.server.ServerState
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -18,7 +19,7 @@ class ServerStatusChangedPersitence(
         bus.subscribe(ContainerEventBus.GLOBAL) { event ->
             if (event is ContainerEvent.ServerStatusChanged) {
                 log.info("Updating server status for serverId: ${event.serverId} to ${event.newStatus}")
-                serverRepository.updateStatus(event.serverId, event.newStatus)
+                serverRepository.updateStatus(event.serverId, ServerState(event.newStatus))
             }
         }
     }
