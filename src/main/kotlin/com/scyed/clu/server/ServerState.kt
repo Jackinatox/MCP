@@ -8,12 +8,21 @@ class ServerState(status: ServerStatus) {
         private set
 
     @Throws(BadServerStateException::class)
-    fun start() {
+    fun started() {
         if (this.status == ServerStatus.STARTED) {
             throw BadServerStateException(status, ServerStatus.STARTED, "Server is already started")
         }
 
         this.status = ServerStatus.STARTED
+    }
+
+    @Throws(BadServerStateException::class)
+    fun starting() {
+        if (this.status == ServerStatus.STARTING) {
+            throw BadServerStateException(status, ServerStatus.STARTING, "Server is already started")
+        }
+
+        this.status = ServerStatus.STARTING
     }
 
     @Throws(BadServerStateException::class)

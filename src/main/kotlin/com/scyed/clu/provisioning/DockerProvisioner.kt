@@ -98,7 +98,9 @@ class DockerProvisioner(
     }
 
     fun startServer(server: ServerEntity) {
-        server.status.start()
+        server.status.starting()
+        serverRepository.save(server)
+
         if (server.containerId != null) {
             containerService.startExistingContainer(server.id!!, server.containerId!!)
             log.info("Restarted existing container ${server.containerId}")
@@ -110,6 +112,7 @@ class DockerProvisioner(
             server.containerId = container.id
         }
 
+        server.status.started() // TODO: Console listener that sets server to started when some line is found
         serverRepository.save(server)
     }
 

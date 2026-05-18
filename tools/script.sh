@@ -13,25 +13,14 @@ for i in $(seq 1 10); do
 done
 
 cat > /home/container/server.py << 'EOF'
-import http.server
-import os
+import sys
 
-port = int(os.environ.get("SERVER_PORT", 8080))
+prefix = "[ECHO] "
 
-class Handler(http.server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        body = b"Hello, World!\n"
-        self.send_response(200)
-        self.send_header("Content-Type", "text/plain")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+print("Echo server started. Listening on stdin...", flush=True)
 
-    def log_message(self, format, *args):
-        print(f"[{self.address_string()}] {format % args}", flush=True)
-
-print(f"Starting Hello World HTTP server on port {port}", flush=True)
-http.server.HTTPServer(("0.0.0.0", port), Handler).serve_forever()
+for line in sys.stdin:
+    print(f"{prefix}{line}", end="", flush=True)
 EOF
 
 echo "Installation complete."

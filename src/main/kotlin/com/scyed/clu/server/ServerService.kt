@@ -104,7 +104,6 @@ class ServerService(
         server.status.stop()
         bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPING))
         containerService.stopContainer(server.id!!, server.containerId!!)
-        server.containerId = null
         bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPED))
 
         serverRepository.save(server)
