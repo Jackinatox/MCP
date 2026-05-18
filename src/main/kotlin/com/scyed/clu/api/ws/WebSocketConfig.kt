@@ -1,6 +1,7 @@
 package com.scyed.clu.api.ws
 
 import com.scyed.clu.api.ws.handlers.ConsoleWSHandler
+import com.scyed.clu.infra.event.handler.WSEventPump
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.socket.WebSocketHandler

@@ -1,4 +1,4 @@
-package com.scyed.clu.api.ws
+package com.scyed.clu.infra.event.handler
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.scyed.clu.api.ws.message.ConsoleMessage

@@ -1,7 +1,10 @@
 package com.scyed.clu.server
 
 import org.springframework.data.jpa.repository.EntityGraph
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 interface ServerRepository : CrudRepository<ServerEntity, UUID> {
@@ -9,4 +12,9 @@ interface ServerRepository : CrudRepository<ServerEntity, UUID> {
 
     @EntityGraph(attributePaths = ["glyphEntity"])
     fun findWithGlyphById(id: UUID): ServerEntity?
+
+    @Transactional
+    @Modifying
+    @Query("UPDATE ServerEntity s SET s.status = :status WHERE s.id = :id")
+    fun updateStatus(id: UUID, status: ServerStatus)
 }

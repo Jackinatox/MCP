@@ -31,7 +31,7 @@ class ServerState(status: ServerStatus) {
             throw BadServerStateException(status, ServerStatus.STOPPING, "Server is already stopped/stopping")
         }
 
-        if (this.status == ServerStatus.STARTING) {
+        if (this.status == ServerStatus.STOPPING) {
             throw BadServerStateException(
                 status,
                 ServerStatus.STOPPING,
@@ -39,7 +39,7 @@ class ServerState(status: ServerStatus) {
             )
         }
 
-        this.status = ServerStatus.STARTED
+        this.status = ServerStatus.STOPPING
     }
 
     @Throws(BadServerStateException::class)
@@ -62,7 +62,7 @@ class ServerState(status: ServerStatus) {
             throw BadServerStateException(status, ServerStatus.STARTED, "Server is busy")
         }
 
-        this.status = ServerStatus.STOPPED
+        this.status = ServerStatus.INSTALLING
     }
 
     @Throws(BadServerStateException::class)

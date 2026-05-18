@@ -7,7 +7,7 @@ import com.github.dockerjava.api.model.Frame
 import com.scyed.clu.glyph.toDto
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
-import com.scyed.clu.server.ServerState
+import com.scyed.clu.server.ServerStateTransitions
 import com.scyed.clu.server.ServerStatus
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
@@ -43,6 +43,7 @@ class DockerProvisioner(
     private val serverRepository: ServerRepository,
     private val properties: GameserverProperties,
     private val containerService: ContainerService,
+    private val transitions: ServerStateTransitions,
 ) {
     private val installScriptName = "install.sh"
     private val installScriptPathInContainer = "/mnt/installScript"
@@ -69,7 +70,7 @@ class DockerProvisioner(
             )
 
             server.containerId = null
-            server.status.install()
+            transitions.install(server)
             server = serverRepository.save(server)
 
             containerService.startContainer(container.id)
@@ -87,19 +88,16 @@ class DockerProvisioner(
             logfileCallback.close()
             log.info("Logfile closed")
 
-            server.status = ServerState(ServerStatus.STOPPED)
-            server = serverRepository.save(server)
+            transitions.force(server, ServerStatus.STOPPED)
 
         } catch (e: Exception) {
             log.error("Provisioning failed for server ${server.id}", e)
-            server.status.error()
-            serverRepository.save(server)
+            transitions.error(server)
         }
     }
 
     fun startServer(server: ServerEntity) {
-        server.status.starting()
-        serverRepository.save(server)
+        transitions.starting(server)
 
         if (server.containerId != null) {
             containerService.startExistingContainer(server.id!!, server.containerId!!)
@@ -110,10 +108,10 @@ class DockerProvisioner(
             val container = containerService.createAndStartGameServer(server, startup)
             log.info("Created new game server container ${container.id}")
             server.containerId = container.id
+            serverRepository.save(server)
         }
 
-        server.status.started() // TODO: Console listener that sets server to started when some line is found
-        serverRepository.save(server)
+        transitions.started(server) // TODO: Console listener that sets server to started when some line is found
     }
 
     private fun createInstallScript(serverId: String, script: String): Path {

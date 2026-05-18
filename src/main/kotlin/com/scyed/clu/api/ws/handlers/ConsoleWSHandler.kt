@@ -1,6 +1,6 @@
 package com.scyed.clu.api.ws.handlers
 
-import com.scyed.clu.api.ws.WSEventPump
+import com.scyed.clu.infra.event.handler.WSEventPump
 import org.slf4j.LoggerFactory
 import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage

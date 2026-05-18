@@ -5,7 +5,7 @@ import com.github.dockerjava.api.exception.NotFoundException
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
-import com.scyed.clu.server.ServerState
+import com.scyed.clu.server.ServerStateTransitions
 import com.scyed.clu.server.ServerStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
@@ -14,7 +14,8 @@ import org.springframework.stereotype.Component
 class ContainerStateStartupCheck(
     private val dockerClient: DockerClient,
     private val serverRepository: ServerRepository,
-    private val containerService: ContainerService
+    private val containerService: ContainerService,
+    private val transitions: ServerStateTransitions,
 ) : StartupCheck {
     private val log = LoggerFactory.getLogger(javaClass)
     override val name: String = "ContainerStateStartupCheck"
@@ -31,10 +32,10 @@ class ContainerStateStartupCheck(
         servers.forEach { server ->
             val newStatus = resolveStatus(server)
 
-            server.status = ServerState(newStatus.state)
             server.containerId = newStatus.cid
-            log.info("New container Status: ${newStatus.state} - ${server.id} id: ${server.containerId}")
             serverRepository.save(server)
+            transitions.force(server, newStatus.state)
+            log.info("New container Status: ${newStatus.state} - ${server.id} id: ${server.containerId}")
         }
     }
 

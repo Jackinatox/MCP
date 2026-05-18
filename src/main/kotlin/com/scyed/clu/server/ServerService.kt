@@ -3,8 +3,6 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
-import com.scyed.clu.infra.event.ContainerEvent
-import com.scyed.clu.infra.event.ContainerEventBus
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
 import com.scyed.clu.server.event.ServerReinstallRequested
@@ -23,7 +21,7 @@ class ServerService(
     private val eventPublisher: ApplicationEventPublisher,
     private val provisioner: DockerProvisioner,
     private val containerService: ContainerService,
-    private val bus: ContainerEventBus
+    private val transitions: ServerStateTransitions,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -101,12 +99,9 @@ class ServerService(
         if (server.containerId == null) {
             log.warn("Server ${server.id} wasnt stopped but didnt had a container id")
         }
-        server.status.stop()
-        bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPING))
+        transitions.stopping(server)
         containerService.stopContainer(server.id!!, server.containerId!!)
-        bus.publish(ContainerEvent.ServerStatusChanged(server.id!!, ServerStatus.STOPPED))
-
-        serverRepository.save(server)
+        // STOPPED is published by ContainerAttachmentManager's waitCallback on actual exit.
         log.info("Server ${server.id} stopped")
     }
 
@@ -114,17 +109,16 @@ class ServerService(
         if (server.containerId == null) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "No container to kill for server ${server.id}")
         }
-        server.status.kill()
+        transitions.kill(server)
         try {
             // TODO: Proper kill
             containerService.stopContainer(server.id!!, server.containerId!!)
             containerService.removeContainer(server.containerId!!)
             server.containerId = null
+            serverRepository.save(server)
             log.info("Server ${server.id} killed and container removed")
         } catch (e: Exception) {
             log.error("Failed to kill Server ${server.id}")
-        } finally {
-            serverRepository.save(server)
         }
     }
 }
