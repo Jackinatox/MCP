@@ -22,6 +22,16 @@ class ServerStateTransitions(private val bus: ContainerEventBus) {
         publish(server)
     }
 
+    fun stopped(server: ServerEntity) {
+        server.status.stopped()
+        publish(server)
+    }
+
+    fun crashed(server: ServerEntity) {
+        server.status.crashed()
+        publish(server)
+    }
+
     fun install(server: ServerEntity) {
         server.status.install()
         publish(server)

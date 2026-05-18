@@ -83,6 +83,8 @@ class ContainerService(
     fun stopContainer(serverId: UUID, containerId: String) {
         log.info("Stopping container $containerId")
         try {
+            // Detach first so the wait callback can't race the caller's explicit
+            // transitions.stopped() with a CRASHED (SIGKILL exits non-zero).
             containerAttachmentManager.detach(serverId)
             docker.killContainerCmd(containerId).exec()
             log.info("Stopped container $containerId")

@@ -95,14 +95,13 @@ class ServerService(
     }
 
     private fun stopServer(server: ServerEntity) {
-        // If somehow bugged and now conatinerId, just set the status to stopped
         if (server.containerId == null) {
             log.warn("Server ${server.id} wasnt stopped but didnt had a container id")
+            return
         }
         transitions.stopping(server)
         containerService.stopContainer(server.id!!, server.containerId!!)
-        // STOPPED is published by ContainerAttachmentManager's waitCallback on actual exit.
-        log.info("Server ${server.id} stopped")
+        transitions.stopped(server)
     }
 
     private fun killServer(server: ServerEntity) {

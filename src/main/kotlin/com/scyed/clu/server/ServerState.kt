@@ -66,6 +66,16 @@ class ServerState(status: ServerStatus) {
     }
 
     @Throws(BadServerStateException::class)
+    fun stopped() {
+        this.status = ServerStatus.STOPPED
+    }
+
+    @Throws(BadServerStateException::class)
+    fun crashed() {
+        this.status = ServerStatus.CRASHED
+    }
+
+    @Throws(BadServerStateException::class)
     fun error() {
         this.status = ServerStatus.ERROR
     }

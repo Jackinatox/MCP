@@ -1,0 +1,44 @@
+{
+  "_comment": "Dummy egg for scyed integration testing - not a real server config",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": null
+  },
+  "exported_at": "2026-04-28T09:00:00+00:00",
+  "name": "Python Server (Dummy)",
+  "author": "test@scyed.com",
+  "description": "A test Python egg used to verify Egg and EggProvider parsing.",
+  "features": [],
+  "docker_images": {
+    "Python 3.11": "ghcr.io/pterodactyl/yolks:python_3.11",
+    "Python 3.10": "ghcr.io/pterodactyl/yolks:python_3.10"
+  },
+  "file_denylist": [],
+  "startup": "python3 server.py",
+  "config": {
+    "files": "{\"server.properties\": {\"parser\": \"properties\", \"find\": {\"server-ip\": \"0.0.0.0\", \"server-port\": \"{{server.build.default.port}}\", \"enable-query\": \"true\", \"query.port\": \"{{server.build.default.port}}\"}}}",
+    "startup": "{\"done\": \")! For help, type \"}",
+    "logs": "{}",
+    "stop": "stop"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/ash\n# Test Egg Installation Script\n# Server Files: /home/container\n\nmkdir -p /home/container\ncd /home/container\n\necho \"Downloading test server...\"\n\nfor i in $(seq 1 10); do\n  echo \"Installing... step $i/10\"\n  sleep 1\ndone\n\ncat > /home/container/server.py << 'EOF'\nimport sys\n\nprefix = \"[ECHO] \"\n\nprint(\"Echo server started. Listening on stdin...\", flush=True)\n\nfor line in sys.stdin:\n    print(f\"{prefix}{line}\", end=\"\", flush=True)\nEOF\n\necho \"Installation complete.\"",
+      "container": "ghcr.io/pterodactyl/installers:alpine",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Dummy Variable",
+      "description": "A dummy variable for testing purposes.",
+      "env_variable": "DUMMY_VARIABLE",
+      "default_value": "default_value",
+      "user_viewable": true,
+      "user_editable": true,
+      "required": true,
+      "rules": "required|regex:/^([\\w\\d._-]+)(\\.jar)$/",
+      "field_type": "text"
+    }
+  ]
+}

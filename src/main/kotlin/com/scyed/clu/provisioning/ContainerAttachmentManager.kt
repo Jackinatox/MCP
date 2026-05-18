@@ -14,7 +14,6 @@ import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Component
 class ContainerAttachmentManager(private val docker: DockerClient, private val bus: ContainerEventBus) {
@@ -27,9 +26,6 @@ class ContainerAttachmentManager(private val docker: DockerClient, private val b
         val stdinPipe = PipedOutputStream()
         val stdinSource = PipedInputStream(stdinPipe)
         val lineBuffer = StringBuilder()
-        // Either waitCallback (preferred) or streamCallback detach (fallback) publishes
-        // the exit status — never both.
-        val exitStatusPublished = AtomicBoolean(false)
 
         val streamCallback = object : ResultCallback.Adapter<Frame>() {
             override fun onNext(frame: Frame) {
@@ -48,16 +44,13 @@ class ContainerAttachmentManager(private val docker: DockerClient, private val b
                     bus.publish(ContainerEvent.ConsoleLine(serverId, lineBuffer.toString().trimEnd('\r')))
                     lineBuffer.clear()
                 }
-                publishExitStatusFallback(serverId, containerId, exitStatusPublished)
                 bus.publish(ContainerEvent.Detached(serverId, containerId))
                 super.onComplete()
             }
 
             override fun onError(throwable: Throwable) {
                 log.error("Attach stream error for container $containerId", throwable)
-                publishExitStatusFallback(serverId, containerId, exitStatusPublished)
                 bus.publish(ContainerEvent.Detached(serverId, containerId))
-
                 super.onError(throwable)
             }
         }
@@ -67,9 +60,19 @@ class ContainerAttachmentManager(private val docker: DockerClient, private val b
 
         val waitCallback = object : WaitContainerResultCallback() {
             override fun onNext(waitResponse: WaitResponse?) {
-                if (!exitStatusPublished.compareAndSet(false, true)) return
-                val status = if (waitResponse?.statusCode == 0) ServerStatus.STOPPED else ServerStatus.ERROR
+                publishExit(waitResponse?.statusCode)
+            }
+
+            // Silent: either we closed the wait ourselves (detach during stop) or the
+            // connection broke. Either way the caller owns publishing the final status.
+            override fun onError(throwable: Throwable) {
+                log.debug("Wait callback ended for container $containerId: {}", throwable.message)
+            }
+
+            private fun publishExit(exitCode: Int?) {
+                val status = if (exitCode == 0) ServerStatus.STOPPED else ServerStatus.CRASHED
                 bus.publish(ContainerEvent.ServerStatusChanged(serverId, status))
+                detach(serverId)
             }
         }
 
@@ -83,23 +86,6 @@ class ContainerAttachmentManager(private val docker: DockerClient, private val b
 
     fun detach(serverId: UUID) {
         attachments.remove(serverId)?.close()
-    }
-
-    private fun publishExitStatusFallback(serverId: UUID, containerId: String, published: AtomicBoolean) {
-        if (!published.compareAndSet(false, true)) return
-        val status = runCatching {
-            val state = docker.inspectContainerCmd(containerId).exec().state
-            // Container still running means the stream just detached; let waitCallback handle the real exit.
-            if (state?.running == true) {
-                published.set(false)
-                return
-            }
-            if (state?.exitCodeLong == 0L) ServerStatus.STOPPED else ServerStatus.ERROR
-        }.getOrElse { e ->
-            log.warn("Failed to inspect container $containerId after detach", e)
-            ServerStatus.ERROR
-        }
-        bus.publish(ContainerEvent.ServerStatusChanged(serverId, status))
     }
 
     class ContainerAttachment(
