@@ -86,7 +86,7 @@ export function ServersPage() {
         </div>
       )}
 
-      {data && data.servers.map((s) => <ServerCard key={s.id} server={s} />)}
+      {data && data.servers.map((s) => <ServerCard key={s.id} server={s} onDeleted={fetchServers} />)}
     </div>
   )
 }

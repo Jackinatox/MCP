@@ -51,7 +51,7 @@ class ContainerStateStartupCheck(
         // server was mid-install when app crashed — install did not complete
         if (server.status.status in setOf(ServerStatus.PROVISIONING, ServerStatus.INSTALLING)) {
             log.warn("Removing container cause it was ${server.status.status}")
-            containerService.removeContainer(cid)
+            containerService.removeContainer(server)
             return ServerStateCheck(ServerStatus.ERROR, null)
         }
 

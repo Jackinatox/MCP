@@ -5,12 +5,17 @@ import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
+import com.scyed.clu.provisioning.GameserverProperties
+import com.scyed.clu.server.event.ServerDeleted
 import com.scyed.clu.server.event.ServerReinstallRequested
+import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
+import java.io.File
+import java.nio.file.Files
 import java.util.*
 
 @Service
@@ -22,6 +27,7 @@ class ServerService(
     private val provisioner: DockerProvisioner,
     private val containerService: ContainerService,
     private val transitions: ServerStateTransitions,
+    private val properties: GameserverProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -94,6 +100,20 @@ class ServerService(
         }
     }
 
+    fun deleteServer(serverId: UUID) {
+        val server = serverRepository.findById(serverId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
+        serverRepository.save(server, server.status.deleting())
+        containerService.removeContainer(server)
+
+        val serverPath = properties.gameserverStorage.resolve(serverId.toString()).toAbsolutePath();
+        log.info("Deleting ServerDirectory: $serverPath")
+        FileUtils.deleteDirectory(serverPath.toFile())
+
+        serverRepository.save(server, server.status.deleted())
+        eventPublisher.publishEvent(ServerDeleted(serverId))
+    }
+
     private fun stopServer(server: ServerEntity) {
         if (server.containerId == null) {
             log.warn("Server ${server.id} wasnt stopped but didnt had a container id")
@@ -112,7 +132,7 @@ class ServerService(
         try {
             // TODO: Proper kill
             containerService.stopContainer(server.id!!, server.containerId!!)
-            containerService.removeContainer(server.containerId!!)
+            containerService.removeContainer(server)
 
             log.info("Server ${server.id} killed and container removed")
         } catch (e: Exception) {

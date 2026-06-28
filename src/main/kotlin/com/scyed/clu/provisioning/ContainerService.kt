@@ -2,9 +2,11 @@ package com.scyed.clu.provisioning
 
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.command.CreateContainerResponse
+import com.github.dockerjava.api.command.PullImageResultCallback
 import com.github.dockerjava.api.model.Bind
 import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
+import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.api.model.Volume
 import com.scyed.clu.server.ServerEntity
 import org.slf4j.LoggerFactory
@@ -23,6 +25,7 @@ class ContainerService(
     private val gameserverPathInContainer = "/home/container"
 
     fun createAndStartGameServer(server: ServerEntity, startup: String): CreateContainerResponse {
+        pullImage(server.image)
         val container = docker.createContainerCmd(server.image)
             .withName(server.id.toString())
             .withHostConfig(
@@ -47,6 +50,30 @@ class ContainerService(
         return container
     }
 
+    private fun pullImage(image: String) {
+        log.info("Started pulling Image {}", image);
+        val splits = image.split(":")
+        if (splits.size != 2) {
+            throw IllegalArgumentException("Server image format is incorrect, needs to have one ':' image: $image")
+        }
+        val pull = docker.pullImageCmd(splits[0]).withTag(splits[1]).exec(object :PullImageResultCallback() {
+            override fun onNext(item: PullResponseItem?) {
+                log.debug(item?.progressDetail.toString())
+                super.onNext(item)
+            }
+
+            override fun onComplete() {
+                log.info("Image pulling completed.")
+                super.onComplete()
+            }
+
+            override fun onError(throwable: Throwable?) {
+                log.error("Image pulling failed", throwable)
+                super.onError(throwable)
+            }
+        }).awaitCompletion();
+    }
+
     fun createInstallContainer(
         server: ServerEntity,
         installImage: String,
@@ -54,6 +81,7 @@ class ContainerService(
         installScriptPathInContainer: String,
         installScriptName: String,
     ): CreateContainerResponse {
+        pullImage(installImage)
         return docker.createContainerCmd(installImage)
             .withName(server.id.toString())
             .withHostConfig(
@@ -93,8 +121,13 @@ class ContainerService(
         }
     }
 
-    fun removeContainer(containerId: String) {
-        log.info("Removing container $containerId")
+    fun removeContainer(server: ServerEntity) {
+        if (server.containerId == null) {
+            log.info("No container to remove")
+            return
+        }
+        val containerId = server.id.toString()
+        log.info("Removing container $containerId for server ${server.id}")
         try {
             docker.removeContainerCmd(containerId).withForce(true).exec()
         } catch (e: Exception) {

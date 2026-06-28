@@ -8,27 +8,39 @@ class ServerState(status: ServerStatus) {
         private set
 
     @Throws(BadServerStateException::class)
-    fun started() {
+    fun started(): ServerState {
         if (this.status == ServerStatus.STARTED) {
             throw BadServerStateException(status, ServerStatus.STARTED, "Server is already started")
         }
 
         this.status = ServerStatus.STARTED
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun starting() {
+    fun starting(): ServerState {
         if (this.status == ServerStatus.STARTING) {
             throw BadServerStateException(status, ServerStatus.STARTING, "Server is already started")
         }
 
         this.status = ServerStatus.STARTING
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun stop() {
+    fun stop(): ServerState {
         if (this.status in arrayOf(ServerStatus.STOPPING, ServerStatus.STOPPED)) {
             throw BadServerStateException(status, ServerStatus.STOPPING, "Server is already stopped/stopping")
+        }
+
+        this.status = ServerStatus.STOPPING
+        return this
+    }
+
+    @Throws(BadServerStateException::class)
+    fun deleting(): ServerState {
+        if (this.status in arrayOf(ServerStatus.INSTALLING, ServerStatus.STOPPING)) {
+            throw BadServerStateException(status, ServerStatus.STOPPING, "Server cant do that now")
         }
 
         if (this.status == ServerStatus.STOPPING) {
@@ -39,20 +51,31 @@ class ServerState(status: ServerStatus) {
             )
         }
 
-        this.status = ServerStatus.STOPPING
+        this.status = ServerStatus.DELETING
+        return this;
     }
 
     @Throws(BadServerStateException::class)
-    fun install() {
+    fun deleted(): ServerState {
+        if (this.status != ServerStatus.DELETING) {
+            throw BadServerStateException(status, ServerStatus.DELETED, "Server deletion hasnt started")
+        }
+        this.status = ServerStatus.DELETED
+        return this
+    }
+
+    @Throws(BadServerStateException::class)
+    fun install(): ServerState {
         if (this.status in arrayOf(ServerStatus.STARTED, ServerStatus.TRANSFERRING_LOCKED)) {
             throw BadServerStateException(status, ServerStatus.STARTED, "Server is already started")
         }
 
         this.status = ServerStatus.STARTED
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun kill() {
+    fun kill(): ServerState {
         if (this.status in arrayOf(
                 ServerStatus.INSTALLING,
                 ServerStatus.TRANSFERRING_LOCKED,
@@ -63,21 +86,25 @@ class ServerState(status: ServerStatus) {
         }
 
         this.status = ServerStatus.INSTALLING
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun stopped() {
+    fun stopped(): ServerState {
         this.status = ServerStatus.STOPPED
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun crashed() {
+    fun crashed(): ServerState {
         this.status = ServerStatus.CRASHED
+        return this
     }
 
     @Throws(BadServerStateException::class)
-    fun error() {
+    fun error(): ServerState {
         this.status = ServerStatus.ERROR
+        return this
     }
 
 

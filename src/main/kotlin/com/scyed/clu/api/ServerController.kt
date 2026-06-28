@@ -38,6 +38,11 @@ class ServerController(private val serverService: ServerService) {
         serverService.powerAction(serverId, action)
     }
 
+    @DeleteMapping("{serverId}")
+    fun delete(@PathVariable serverId: UUID) {
+        serverService.deleteServer(serverId)
+    }
+
     data class ReinstallServerRequest(val deleteFiles: Boolean = false, val forceStop: Boolean = false)
     data class ReinstallServerResponse(val id: UUID, val status: ServerStatus)
     data class ServerResponse(val count: Long, val servers: List<ServerEntity>)
