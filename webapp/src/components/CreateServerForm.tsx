@@ -49,9 +49,11 @@ const inputCls =
   "rounded-md border bg-background px-3 py-1.5 text-sm outline-none ring-ring/50 focus:ring-2 disabled:opacity-50"
 
 export function CreateServerForm({
+  podId,
   onCreated,
   onCancel,
 }: {
+  podId: string
   onCreated: () => void
   onCancel: () => void
 }) {
@@ -121,6 +123,7 @@ export function CreateServerForm({
       glyphId: Number(fields.glyphId),
       startCommand: fields.startCommand || undefined,
       env: { ...glyphEnv, ...customEnv },
+      podId,
     }
 
     fetch("/v1/server", {

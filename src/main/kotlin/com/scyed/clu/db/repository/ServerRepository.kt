@@ -29,6 +29,8 @@ interface ServerRepository : CrudRepository<ServerEntity, UUID> {
     @Query("UPDATE ServerEntity s SET s.containerId = :containerId WHERE s.id = :id")
     fun updateContainerId(id: UUID, containerId: String?)
 
+    fun findByPodEntityId(podEntityId: UUID): List<ServerEntity>
+
     fun <S : ServerEntity> save(entity: S, state: ServerState): S {
         return save(entity)
     }

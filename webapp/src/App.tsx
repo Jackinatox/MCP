@@ -1,12 +1,12 @@
 import { BrowserRouter, NavLink, Navigate, Route, Routes } from "react-router"
-import { Code2, Server } from "lucide-react"
-import { ServersPage } from "@/pages/ServersPage"
+import { Box, Code2 } from "lucide-react"
+import { PodsPage } from "@/pages/PodsPage"
 import { ServerDetailPage } from "@/pages/ServerDetailPage"
 import { GlyphsPage } from "@/pages/GlyphsPage"
 import { GlyphDetailPage } from "@/pages/GlyphDetailPage"
 
 const TOOLS = [
-  { path: "/servers", label: "Servers", icon: Server },
+  { path: "/pods", label: "Pods", icon: Box },
 ]
 
 const ADMIN = [
@@ -57,12 +57,12 @@ export function App() {
 
         <main className="flex-1 overflow-auto p-6">
           <Routes>
-            <Route index element={<Navigate to="/servers" replace />} />
+            <Route index element={<Navigate to="/pods" replace />} />
             <Route
-              path="/servers"
+              path="/pods"
               element={
                 <div className="mx-auto max-w-2xl">
-                  <ServersPage />
+                  <PodsPage />
                 </div>
               }
             />

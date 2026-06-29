@@ -1,23 +1,23 @@
 import { useEffect, useState } from "react"
 import { Plus } from "lucide-react"
+import { PodCard } from "@/components/PodCard"
+import { CreatePodForm } from "@/components/CreatePodForm"
 import { Button } from "@/components/ui/button"
-import { ServerCard } from "@/components/ServerCard"
-import { CreateServerForm } from "@/components/CreateServerForm"
-import type { ServerResponse } from "@/types/server"
+import type { PodResponse } from "@/types/pod"
 
-export function ServersPage() {
-  const [data, setData] = useState<ServerResponse | null>(null)
+export function PodsPage() {
+  const [data, setData] = useState<PodResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
 
-  const fetchServers = () => {
+  const fetchPods = () => {
     setLoading(true)
     setError(null)
-    fetch("/v1/server")
+    fetch("/v1/pod")
       .then((r) => {
         if (!r.ok) throw new Error(`${r.status} ${r.statusText}`)
-        return r.json() as Promise<ServerResponse>
+        return r.json() as Promise<PodResponse>
       })
       .then(setData)
       .catch((e: Error) => setError(e.message))
@@ -25,44 +25,35 @@ export function ServersPage() {
   }
 
   useEffect(() => {
-    fetchServers()
+    fetchPods()
   }, [])
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Servers</h2>
+          <h2 className="text-lg font-semibold">Pods</h2>
           {data && (
             <p className="text-sm text-muted-foreground">
-              {data.count} server{data.count !== 1 ? "s" : ""}
+              {data.count} pod{data.count !== 1 ? "s" : ""}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={fetchServers}
-            disabled={loading}
-          >
+          <Button size="sm" variant="outline" onClick={fetchPods} disabled={loading}>
             {loading ? "Loading…" : "Refresh"}
           </Button>
-          <Button
-            size="sm"
-            onClick={() => setCreating(true)}
-            disabled={creating}
-          >
-            <Plus className="mr-1 h-3.5 w-3.5" /> New server
+          <Button size="sm" onClick={() => setCreating(true)} disabled={creating}>
+            <Plus className="mr-1 h-3.5 w-3.5" /> New pod
           </Button>
         </div>
       </div>
 
       {creating && (
-        <CreateServerForm
+        <CreatePodForm
           onCreated={() => {
             setCreating(false)
-            fetchServers()
+            fetchPods()
           }}
           onCancel={() => setCreating(false)}
         />
@@ -75,18 +66,14 @@ export function ServersPage() {
       )}
 
       {loading && !data && (
-        <div className="py-8 text-center text-sm text-muted-foreground">
-          Loading…
-        </div>
+        <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
       )}
 
-      {data && data.servers.length === 0 && !creating && (
-        <div className="py-8 text-center text-sm text-muted-foreground">
-          No servers found.
-        </div>
+      {data && data.pods.length === 0 && (
+        <div className="py-8 text-center text-sm text-muted-foreground">No pods found.</div>
       )}
 
-      {data && data.servers.map((s) => <ServerCard key={s.id} server={s} onDeleted={fetchServers} />)}
+      {data?.pods.map((p) => <PodCard key={p.id} pod={p} />)}
     </div>
   )
 }

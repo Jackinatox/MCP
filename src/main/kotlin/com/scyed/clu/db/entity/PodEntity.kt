@@ -16,5 +16,5 @@ class PodEntity (
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private val id: UUID? = null
+    var id: UUID? = null
 }
