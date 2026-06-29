@@ -5,6 +5,7 @@ import com.github.dockerjava.api.exception.NotFoundException
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
+import com.scyed.clu.server.ServerState
 import com.scyed.clu.server.ServerStateTransitions
 import com.scyed.clu.server.ServerStatus
 import org.slf4j.LoggerFactory
@@ -25,7 +26,7 @@ class ContainerStateStartupCheck(
     }
 
     override fun runCheck() {
-        val servers = serverRepository.findAll();
+        val servers = serverRepository.findByNotStatus(ServerState(ServerStatus.DELETED));
 
         log.info("$name server-count: ${servers.count()}")
 

@@ -3,9 +3,9 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.glyph.GlyphRepository
+import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
-import com.scyed.clu.provisioning.GameserverProperties
 import com.scyed.clu.server.event.ServerDeleted
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.apache.commons.io.FileUtils

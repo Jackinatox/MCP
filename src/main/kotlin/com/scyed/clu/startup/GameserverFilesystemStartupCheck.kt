@@ -1,6 +1,6 @@
 package com.scyed.clu.startup
 
-import com.scyed.clu.provisioning.GameserverProperties
+import com.scyed.clu.infra.properrties.GameserverProperties
 import org.springframework.stereotype.Component
 import java.nio.file.Files
 import java.nio.file.Path

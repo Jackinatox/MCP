@@ -8,6 +8,7 @@ import com.github.dockerjava.api.model.Binds
 import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.api.model.Volume
+import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.server.ServerEntity
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

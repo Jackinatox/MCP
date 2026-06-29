@@ -4,11 +4,15 @@ import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
+import org.springframework.data.repository.query.Param
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
 
 interface ServerRepository : CrudRepository<ServerEntity, UUID> {
     fun existsByName(name: String): Boolean
+
+    @Query("select s from ServerEntity s where s.status != :status")
+    fun findByNotStatus(@Param("status") status: ServerState): List<ServerEntity>
 
     @EntityGraph(attributePaths = ["glyphEntity"])
     fun findWithGlyphById(id: UUID): ServerEntity?

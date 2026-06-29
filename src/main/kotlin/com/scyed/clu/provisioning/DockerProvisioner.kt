@@ -5,6 +5,7 @@ import com.github.dockerjava.api.async.ResultCallback
 import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.scyed.clu.glyph.toDto
+import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.server.ServerEntity
 import com.scyed.clu.server.ServerRepository
 import com.scyed.clu.server.ServerStateTransitions
@@ -25,17 +26,7 @@ import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
 
-@ConfigurationProperties(prefix = "scyed.gameserver")
-data class GameserverProperties(
-    val installTemp: Path = Paths.get("leck"),
-    val gameserverStorage: Path = Paths.get("leck"),
-    val userUid: Long = 1001,
-    val userGid: Long = 1001,
-)
 
-@Configuration
-@EnableConfigurationProperties(GameserverProperties::class)
-class EggConfiguration
 
 @Component
 class DockerProvisioner(
