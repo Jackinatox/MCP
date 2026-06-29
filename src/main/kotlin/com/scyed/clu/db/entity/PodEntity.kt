@@ -4,6 +4,7 @@ import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import java.util.UUID
 
 @Entity
 class PodEntity (
@@ -14,6 +15,6 @@ class PodEntity (
 
 ) {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long? = null
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private val id: UUID? = null
 }

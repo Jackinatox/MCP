@@ -2,6 +2,7 @@ package com.scyed.clu.api.dto
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import java.util.UUID
 
 data class CreateServerRequest(
     @NotBlank val name: String,
@@ -12,4 +13,5 @@ data class CreateServerRequest(
     @NotNull var env: Map<String, String> = emptyMap(),
     @NotNull var glyphId: Long,
     var startCommand: String?,
+    @NotBlank var podId: UUID
 )

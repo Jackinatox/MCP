@@ -5,6 +5,7 @@ import com.scyed.clu.db.entity.ServerEntity
 import com.scyed.clu.db.enums.ServerStatus
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.db.repository.GlyphRepository
+import com.scyed.clu.db.repository.PodRepository
 import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.provisioning.ContainerService
@@ -29,6 +30,7 @@ class ServerService(
     private val containerService: ContainerService,
     private val transitions: ServerStateTransitions,
     private val properties: GameserverProperties,
+    private val podRepository: PodRepository
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -42,6 +44,10 @@ class ServerService(
 
         val glyph = glyphRepository.findById(request.glyphId).orElseThrow {
             ResponseStatusException(HttpStatus.BAD_REQUEST, "Glyph not found")
+        }
+
+        val pod = podRepository.findById(request.podId).orElseThrow {
+            ResponseStatusException(HttpStatus.BAD_REQUEST, "Pod not found")
         }
 
         try {
@@ -62,6 +68,7 @@ class ServerService(
                 env = request.env,
                 startCommand = request.startCommand ?: glyph.startup,
                 glyphEntity = glyph,
+                podEntity = pod
             )
         )
         log.info("Created server ${server.name} id=${server.id}")
