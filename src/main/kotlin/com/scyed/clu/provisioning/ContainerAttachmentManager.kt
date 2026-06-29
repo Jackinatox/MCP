@@ -7,7 +7,7 @@ import com.github.dockerjava.api.model.Frame
 import com.github.dockerjava.api.model.WaitResponse
 import com.scyed.clu.infra.event.ContainerEvent
 import com.scyed.clu.infra.event.ContainerEventBus
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.io.PipedInputStream

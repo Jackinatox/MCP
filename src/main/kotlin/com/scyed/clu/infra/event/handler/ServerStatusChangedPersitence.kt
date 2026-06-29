@@ -2,8 +2,8 @@ package com.scyed.clu.infra.event.handler
 
 import com.scyed.clu.infra.event.ContainerEvent
 import com.scyed.clu.infra.event.ContainerEventBus
-import com.scyed.clu.server.ServerRepository
-import com.scyed.clu.server.ServerState
+import com.scyed.clu.db.repository.ServerRepository
+import com.scyed.clu.db.enums.ServerState
 import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component

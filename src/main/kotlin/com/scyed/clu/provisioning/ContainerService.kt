@@ -9,7 +9,7 @@ import com.github.dockerjava.api.model.HostConfig
 import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.api.model.Volume
 import com.scyed.clu.infra.properrties.GameserverProperties
-import com.scyed.clu.server.ServerEntity
+import com.scyed.clu.db.entity.ServerEntity
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.nio.file.Files

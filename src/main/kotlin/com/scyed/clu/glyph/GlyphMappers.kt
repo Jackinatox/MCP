@@ -1,5 +1,7 @@
 package com.scyed.clu.glyph
 
+import com.scyed.clu.db.entity.GlyphEntity
+
 data class GlyphSummary(
     val id: Long?,
     val name: String,

@@ -1,7 +1,7 @@
 package com.scyed.clu.infra.persistence.converter
 
-import com.scyed.clu.server.ServerState
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerState
+import com.scyed.clu.db.enums.ServerStatus
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 

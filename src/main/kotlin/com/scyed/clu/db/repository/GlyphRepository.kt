@@ -1,5 +1,6 @@
-package com.scyed.clu.glyph
+package com.scyed.clu.db.repository
 
+import com.scyed.clu.db.entity.GlyphEntity
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.CrudRepository
 

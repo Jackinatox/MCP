@@ -1,10 +1,9 @@
 package com.scyed.clu.api
 
-import com.scyed.clu.glyph.GlyphEntity
-import com.scyed.clu.glyph.GlyphRepository
+import com.scyed.clu.db.entity.GlyphEntity
+import com.scyed.clu.db.repository.GlyphRepository
 import com.scyed.clu.glyph.GlyphSummary
 import com.scyed.clu.glyph.toSummary
-import org.springframework.data.jpa.domain.AbstractPersistable_.id
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable

@@ -1,5 +1,7 @@
-package com.scyed.clu.server
+package com.scyed.clu.db.repository
 
+import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.enums.ServerState
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query

@@ -1,8 +1,11 @@
 package com.scyed.clu.server
 
 import com.scyed.clu.api.dto.CreateServerRequest
+import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.enums.ServerStatus
 import com.scyed.clu.glyph.GlyphEnvVarValidator
-import com.scyed.clu.glyph.GlyphRepository
+import com.scyed.clu.db.repository.GlyphRepository
+import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
@@ -14,8 +17,6 @@ import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
-import java.io.File
-import java.nio.file.Files
 import java.util.*
 
 @Service

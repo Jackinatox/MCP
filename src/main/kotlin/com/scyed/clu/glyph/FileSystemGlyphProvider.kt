@@ -1,5 +1,6 @@
 package com.scyed.clu.glyph
 
+import com.scyed.clu.db.repository.GlyphRepository
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties

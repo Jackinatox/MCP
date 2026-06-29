@@ -1,6 +1,6 @@
 package com.scyed.clu.api
 
-import com.scyed.clu.server.ServerState
+import com.scyed.clu.db.enums.ServerState
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.validation.FieldError

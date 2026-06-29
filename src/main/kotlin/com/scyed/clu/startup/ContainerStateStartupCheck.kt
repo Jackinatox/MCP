@@ -3,11 +3,11 @@ package com.scyed.clu.startup
 import com.github.dockerjava.api.DockerClient
 import com.github.dockerjava.api.exception.NotFoundException
 import com.scyed.clu.provisioning.ContainerService
-import com.scyed.clu.server.ServerEntity
-import com.scyed.clu.server.ServerRepository
-import com.scyed.clu.server.ServerState
+import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.repository.ServerRepository
+import com.scyed.clu.db.enums.ServerState
 import com.scyed.clu.server.ServerStateTransitions
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 

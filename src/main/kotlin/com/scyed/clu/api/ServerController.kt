@@ -2,10 +2,9 @@ package com.scyed.clu.api
 
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.server.PowerAction
-import com.scyed.clu.server.ServerEntity
+import com.scyed.clu.db.entity.ServerEntity
 import com.scyed.clu.server.ServerService
-import com.scyed.clu.server.ServerState
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 import java.util.*

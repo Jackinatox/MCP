@@ -1,8 +1,9 @@
-package com.scyed.clu.server
+package com.scyed.clu.db.entity
 
-import com.scyed.clu.glyph.GlyphEntity
 import com.scyed.clu.infra.persistence.converter.EnvMapConverter
 import com.scyed.clu.infra.persistence.converter.ServerStatusConverter
+import com.scyed.clu.db.enums.ServerState
+import com.scyed.clu.db.enums.ServerStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity
@@ -32,6 +33,9 @@ class ServerEntity(
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     var glyphEntity: GlyphEntity,
+
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    var podEntity: PodEntity,
 
     @CreationTimestamp var createdAt: Instant = Instant.now(),
     @UpdateTimestamp var updatedAt: Instant = Instant.now(),

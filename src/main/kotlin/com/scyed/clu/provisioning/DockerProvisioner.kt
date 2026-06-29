@@ -6,15 +6,12 @@ import com.github.dockerjava.api.command.WaitContainerResultCallback
 import com.github.dockerjava.api.model.Frame
 import com.scyed.clu.glyph.toDto
 import com.scyed.clu.infra.properrties.GameserverProperties
-import com.scyed.clu.server.ServerEntity
-import com.scyed.clu.server.ServerRepository
+import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.server.ServerStateTransitions
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
-import org.springframework.boot.context.properties.ConfigurationProperties
-import org.springframework.boot.context.properties.EnableConfigurationProperties
-import org.springframework.context.annotation.Configuration
 import org.springframework.context.event.EventListener
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -22,7 +19,6 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
 
 

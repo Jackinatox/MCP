@@ -1,4 +1,4 @@
-package com.scyed.clu.server
+package com.scyed.clu.db.enums
 
 enum class ServerStatus {
     PROVISIONING, INSTALLING, STARTED, STARTING, STOPPED, STOPPING, CRASHED, ERROR, TRANSFERRING_LOCKED, DELETING, DELETED

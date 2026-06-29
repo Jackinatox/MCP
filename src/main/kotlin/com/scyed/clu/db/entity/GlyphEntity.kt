@@ -1,5 +1,6 @@
-package com.scyed.clu.glyph
+package com.scyed.clu.db.entity
 
+import com.scyed.clu.glyph.EggVariable
 import com.scyed.clu.infra.persistence.converter.EggVariableListConverter
 import com.scyed.clu.infra.persistence.converter.EnvMapConverter
 import com.scyed.clu.infra.persistence.converter.StringListConverter

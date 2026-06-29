@@ -1,5 +1,8 @@
 package com.scyed.clu.server
 
+import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.enums.ServerState
+import com.scyed.clu.db.enums.ServerStatus
 import com.scyed.clu.infra.event.ContainerEvent
 import com.scyed.clu.infra.event.ContainerEventBus
 import org.springframework.stereotype.Component

@@ -1,6 +1,6 @@
 package com.scyed.clu.infra.event
 
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 import java.util.UUID
 
 sealed class ContainerEvent {

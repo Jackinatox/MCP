@@ -2,7 +2,7 @@ package com.scyed.clu.api.ws.message
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
-import com.scyed.clu.server.ServerStatus
+import com.scyed.clu.db.enums.ServerStatus
 
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")

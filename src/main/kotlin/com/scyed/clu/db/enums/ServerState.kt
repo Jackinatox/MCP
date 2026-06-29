@@ -1,4 +1,4 @@
-package com.scyed.clu.server
+package com.scyed.clu.db.enums
 
 import com.fasterxml.jackson.annotation.JsonValue
 
