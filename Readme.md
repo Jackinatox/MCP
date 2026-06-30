@@ -51,9 +51,9 @@ CLU has **two distinct event layers** — don't confuse them:
    (`ContainerEvent`: `ConsoleLine`, `ServerStats`, `ServerStatusChanged`, `Detached`).
    Listeners subscribe per-`serverId` **or** to a well-known `GLOBAL` id; `publish()`
    fans out to both. Two `@PostConstruct` handlers subscribe to `GLOBAL`:
-   - `WSEventPump` — forwards `ConsoleLine` and `ServerStatusChanged` to connected
-     WebSocket clients.
-   - `ServerStatusChangedPersitence` — writes status changes back to the database.
+    - `WSEventPump` — forwards `ConsoleLine` and `ServerStatusChanged` to connected
+      WebSocket clients.
+    - `ServerStatusChangedPersitence` — writes status changes back to the database.
 
    Events reach the bus from two places: `ServerStateTransitions` (which validates the
    state-machine transition in `ServerState` and then publishes `ServerStatusChanged`),
@@ -93,21 +93,33 @@ reconciles every server in the DB against Docker reality: containers found mid-i
 removed and marked `ERROR`; running containers become `STARTED`; missing/stopped ones are
 marked `STOPPED` with their `containerId` cleared.
 
+## Setup
+
+`sudo zfs allow <username> create,destroy,mount <dataset>`
+
+Run This command to give your user permissions to create, destroy and mount zfs datasets
+make sure the user running CLU actually have permission to mount stuff
+
+` echo 'scyed ALL=(root) NOPASSWD: /usr/sbin/zfs' | sudo tee /etc/sudoers.d/scyed-zfs`
+and then in application.properties:
+
+``
+
 ## API
 
 Served under the versioned path prefix `/v1` (configurable; `v1` is the default).
 
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/v1/server` | List all servers (with count) |
-| `POST` | `/v1/server` | Create a server (triggers install) |
-| `POST` | `/v1/server/{serverId}/power?action=START\|STOP\|KILL` | Power action |
-| `POST` | `/v1/server/{serverId}/reinstall` | Reinstall (`forceStop` to stop first) |
-| `DELETE` | `/v1/server/{serverId}` | Delete server + its files |
-| `GET` | `/v1/glyph` | List glyph summaries |
-| `GET` | `/v1/glyph/{glyphId}` | Get a glyph |
-| `WS` | `/v1/ws/console/{serverId}` | Live console / status stream |
-| `GET` | `/v1/webApp`, `/v1/webApp/**` | Frontend SPA |
+| Method   | Path                                                   | Description                           |
+|----------|--------------------------------------------------------|---------------------------------------|
+| `GET`    | `/v1/server`                                           | List all servers (with count)         |
+| `POST`   | `/v1/server`                                           | Create a server (triggers install)    |
+| `POST`   | `/v1/server/{serverId}/power?action=START\|STOP\|KILL` | Power action                          |
+| `POST`   | `/v1/server/{serverId}/reinstall`                      | Reinstall (`forceStop` to stop first) |
+| `DELETE` | `/v1/server/{serverId}`                                | Delete server + its files             |
+| `GET`    | `/v1/glyph`                                            | List glyph summaries                  |
+| `GET`    | `/v1/glyph/{glyphId}`                                  | Get a glyph                           |
+| `WS`     | `/v1/ws/console/{serverId}`                            | Live console / status stream          |
+| `GET`    | `/v1/webApp`, `/v1/webApp/**`                          | Frontend SPA                          |
 
 OpenAPI/Swagger UI is available via springdoc, and the H2 console + Actuator endpoints are
 exposed.
@@ -127,13 +139,13 @@ exposed.
 
 Key properties (`src/main/resources/application.properties`):
 
-| Property | Purpose |
-| --- | --- |
-| `spring.datasource.url` | SQLite database location (`./database.db`) |
-| `scyed.eggs.directory` | Where Glyph/egg JSON files are loaded from |
-| `scyed.gameserver.gameserver-storage` | Per-server game files root |
-| `scyed.gameserver.installTemp` | Scratch dir for install scripts/logs |
-| `scyed.gameserver.user-uid` / `user-gid` | UID/GID containers run as |
+| Property                                 | Purpose                                    |
+|------------------------------------------|--------------------------------------------|
+| `spring.datasource.url`                  | SQLite database location (`./database.db`) |
+| `scyed.eggs.directory`                   | Where Glyph/egg JSON files are loaded from |
+| `scyed.gameserver.gameserver-storage`    | Per-server game files root                 |
+| `scyed.gameserver.installTemp`           | Scratch dir for install scripts/logs       |
+| `scyed.gameserver.user-uid` / `user-gid` | UID/GID containers run as                  |
 
 ## Stack
 

@@ -14,7 +14,7 @@ data class EnvironmentProperties(
 
     @field:Size(max = 255)
     @field:Pattern(
-        regexp = "^[A-Za-z][A-Za-z0-9_.:\\- ]*$",
+        regexp = "^[A-Za-z][A-Za-z0-9_.:/\\- ]*$",
         message = "must be a valid ZFS pool name"
     )
     @field:NotBlank
@@ -22,4 +22,6 @@ data class EnvironmentProperties(
 
     @field:NotNull
     val gmStoragePath: Path,
+
+    val zfsBinary: String,
 )

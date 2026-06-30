@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository
 import java.util.UUID
 
 interface PodRepository : CrudRepository<PodEntity, UUID> {
-
+    fun existsByDatasetName(datasetName: String): Boolean
 }
