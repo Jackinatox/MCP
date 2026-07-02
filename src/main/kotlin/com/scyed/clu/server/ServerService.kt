@@ -8,9 +8,11 @@ import com.scyed.clu.db.repository.GlyphRepository
 import com.scyed.clu.db.repository.PodRepository
 import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.infra.properrties.GameserverProperties
+import com.scyed.clu.infra.zfs.ZFSManager
 import com.scyed.clu.provisioning.ContainerService
 import com.scyed.clu.provisioning.DockerProvisioner
 import com.scyed.clu.server.event.ServerDeleted
+import com.scyed.clu.server.event.ServerDeletionStarted
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
@@ -30,7 +32,8 @@ class ServerService(
     private val containerService: ContainerService,
     private val transitions: ServerStateTransitions,
     private val properties: GameserverProperties,
-    private val podRepository: PodRepository
+    private val podRepository: PodRepository,
+    private val zFSManager: ZFSManager
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -60,11 +63,12 @@ class ServerService(
             ServerEntity(
                 name = request.name,
                 description = request.description,
-                containerId = "",
+                containerId = null,
                 image = request.imageName,
                 skip_scripts = false,
-                memoryMb = request.memoryMb,
                 cpuPercent = request.cpuPercent,
+                memoryMb = request.memoryMb,
+                diskMb = request.diskMb,
                 env = request.env,
                 startCommand = request.startCommand ?: glyph.startup,
                 glyphEntity = glyph,
@@ -111,12 +115,11 @@ class ServerService(
     fun deleteServer(serverId: UUID) {
         val server = serverRepository.findById(serverId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
+        eventPublisher.publishEvent(ServerDeletionStarted(serverId))
         serverRepository.save(server, server.status.deleting())
         containerService.removeContainer(server)
 
-        val serverPath = properties.gameserverStorage.resolve(serverId.toString()).toAbsolutePath();
-        log.info("Deleting ServerDirectory: $serverPath")
-        FileUtils.deleteDirectory(serverPath.toFile())
+        zFSManager.destroyServerDataset(server)
 
         serverRepository.save(server, server.status.deleted())
         eventPublisher.publishEvent(ServerDeleted(serverId))

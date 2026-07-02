@@ -18,6 +18,7 @@ export interface ServerEntity {
   skip_scripts: boolean
   memoryMb: number
   cpuPercent: number
+  diskMb: number
   env: Record<string, string>
   startCommand: string
   createdAt: string

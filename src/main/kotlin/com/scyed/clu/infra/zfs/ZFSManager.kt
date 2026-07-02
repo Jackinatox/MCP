@@ -1,12 +1,16 @@
 package com.scyed.clu.infra.zfs
 
 import com.scyed.clu.db.entity.PodEntity
+import com.scyed.clu.db.entity.ServerEntity
 import com.scyed.clu.infra.properrties.EnvironmentProperties
+import com.scyed.clu.infra.properrties.GameserverProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -15,19 +19,46 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.DurationUnit
 
 @Service
-class ZFSManager(val ep: EnvironmentProperties) {
+class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties: GameserverProperties) {
     private val log = LoggerFactory.getLogger(javaClass)
 
 
     fun createPodDataset(podEntity: PodEntity): ZFSCommandResult {
-        val fullName = "${ep.gmStorageDataset}/${podEntity.datasetName}"
+        val fullName = buildPodDataset(podEntity)
         log.info("Creating pod dataset '$fullName'")
-        val poolCreation = execute(listOf("create", fullName))
-
-        if (!poolCreation.isSuccess) return poolCreation
-
-        return applyQuota(fullName, podEntity.diskMb)
+        return execute(listOf("create", "-o", "quota=${podEntity.diskMb}m", fullName))
     }
+
+    fun createServerDataset(server: ServerEntity): ZFSCommandResult {
+        val fullName = buildServerDatasetName(server)
+        log.info("Create server dataset '$fullName'")
+
+        val newCall = buildList {
+            add("create")
+            if (server.diskMb > 0) addAll(listOf("-o", "quota=${server.diskMb}m"))
+            add(fullName)
+        }
+
+        return execute(newCall)
+    }
+
+    fun destroyServerDataset(serverEntity: ServerEntity): ZFSCommandResult {
+        val fullName = buildServerDatasetName(serverEntity)
+        log.info("Destroying server dataset '$fullName'")
+        val softDelete = execute(listOf("destroy", "-f", fullName))
+
+        if (softDelete.isSuccess) return softDelete
+        log.warn("Soft deletion for dataset '$fullName' failed, using force")
+
+        return execute(listOf("destroy", "-f", fullName))
+    }
+
+    private fun buildServerDatasetName(serverEntity: ServerEntity): String =
+        "${buildPodDataset(serverEntity.podEntity)}/${serverEntity.id}"
+
+    private fun buildPodDataset(pod: PodEntity): String =
+        "${ep.gmStorageDataset}/${pod.datasetName}"
+
 
     private fun applyQuota(datasetName: String, sizeMb: Double): ZFSCommandResult {
         log.info("Setting Quota for $datasetName to ${sizeMb}mb")
@@ -45,6 +76,13 @@ class ZFSManager(val ep: EnvironmentProperties) {
         val start = System.nanoTime()
         val process = ProcessBuilder(command)
             .redirectErrorStream(false)
+            .apply {
+                environment().apply {
+                    put("SUDO_UID", gameserverProperties.userUid.toString())
+                    put("SUDO_GID", gameserverProperties.userGid.toString())
+                    put("SUDO_USER", "scyed")
+                }
+            }
             .start()
 
         val stdoutFuture = streamReaderExecutor.submit<String> { drain(process.inputStream) }
@@ -71,7 +109,8 @@ class ZFSManager(val ep: EnvironmentProperties) {
 
         val stdout = stdoutFuture.get()
         val stderr = stderrFuture.get()
-        val result = ZFSCommandResult(command, process.exitValue(), stdout, stderr, (System.nanoTime() - start) / 1000000)
+        val result =
+            ZFSCommandResult(command, process.exitValue(), stdout, stderr, (System.nanoTime() - start) / 1000000)
 
         if (result.isSuccess) {
             log.debug("OK ({}ms): {}", result.durationMs, result.commandLine())

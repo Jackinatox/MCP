@@ -10,6 +10,7 @@ import com.scyed.clu.db.entity.ServerEntity
 import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.server.ServerStateTransitions
 import com.scyed.clu.db.enums.ServerStatus
+import com.scyed.clu.infra.zfs.ZFSManager
 import com.scyed.clu.server.event.ServerReinstallRequested
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.EventListener
@@ -31,6 +32,7 @@ class DockerProvisioner(
     private val properties: GameserverProperties,
     private val containerService: ContainerService,
     private val transitions: ServerStateTransitions,
+    private val zFSManager: ZFSManager,
 ) {
     private val installScriptName = "install.sh"
     private val installScriptPathInContainer = "/mnt/installScript"
@@ -40,13 +42,14 @@ class DockerProvisioner(
     @EventListener
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     fun reInstallServer(event: ServerReinstallRequested) {
-        var server = serverRepository.findById(event.serverId).orElseThrow()
+        val server = serverRepository.findById(event.serverId).orElseThrow()
         val glyph = server.glyphEntity
         requireNotNull(glyph) { "glyph entity not found" }
         log.info("Provisioning request for ${server.id}")
         try {
+            zFSManager.createServerDataset(server)
             val installScript = createInstallScript(event.serverId.toString(), glyph.installScript)
-            containerService.ensureGameFilesDirectory(event.serverId.toString())
+            containerService.ensureGameFilesDirectory(server)
 
             val container = containerService.createInstallContainer(
                 server,
@@ -58,7 +61,7 @@ class DockerProvisioner(
 
             server.containerId = null
             transitions.install(server)
-            server = serverRepository.save(server)
+            serverRepository.save(server)
 
             containerService.startContainer(container.id)
             log.info("Started install container: ${container.id}")
@@ -91,7 +94,7 @@ class DockerProvisioner(
             log.info("Restarted existing container ${server.containerId}")
         } else {
             val startup = server.glyphEntity.toDto().renderStartup(server.env)
-            containerService.ensureGameFilesDirectory(server.id.toString())
+            containerService.ensureGameFilesDirectory(server)
             val container = containerService.createAndStartGameServer(server, startup)
             log.info("Created new game server container ${container.id}")
             server.containerId = container.id

@@ -16,11 +16,8 @@ class GameserverFilesystemStartupCheck(
 
     override fun runCheck() {
         val installTemp = ensureDirectory(properties.installTemp.toAbsolutePath().normalize(), "installTemp")
-        val gameserverStorage =
-            ensureDirectory(properties.gameserverStorage.toAbsolutePath().normalize(), "gameserverStorage")
 
         validateUnixOwnership(installTemp, "installTemp")
-        validateUnixOwnership(gameserverStorage, "gameserverStorage")
     }
 
     private fun ensureDirectory(path: Path, label: String): Path {

@@ -229,6 +229,9 @@ export function ServerDetailPage() {
           <dt className="text-muted-foreground">CPU</dt>
           <dd>{server.cpuPercent}%</dd>
 
+          <dt className="text-muted-foreground">Disk</dt>
+          <dd>{server.diskMb > 0 ? `${server.diskMb} MB` : "Unlimited (pod limit)"}</dd>
+
           <dt className="text-muted-foreground">Start command</dt>
           <dd className="font-mono">{server.startCommand || "—"}</dd>
 

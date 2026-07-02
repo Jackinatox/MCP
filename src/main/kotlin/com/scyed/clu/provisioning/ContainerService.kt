@@ -10,6 +10,7 @@ import com.github.dockerjava.api.model.PullResponseItem
 import com.github.dockerjava.api.model.Volume
 import com.scyed.clu.infra.properrties.GameserverProperties
 import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.infra.properrties.EnvironmentProperties
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import java.nio.file.Files
@@ -21,6 +22,7 @@ class ContainerService(
     private val docker: DockerClient,
     private val properties: GameserverProperties,
     private val containerAttachmentManager: ContainerAttachmentManager,
+    private val environmentProperties: EnvironmentProperties
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val gameserverPathInContainer = "/home/container"
@@ -35,7 +37,7 @@ class ContainerService(
                     .withMemory(server.memoryMb * 1024L * 1024L)
                     .withReadonlyRootfs(true)
                     .withSecurityOpts(listOf("no-new-privileges"))
-                    .withBinds(Binds(gameFiles(server.id.toString())))
+                    .withBinds(Binds(gameFiles(server)))
             )
             .withStdinOpen(true)
             .withUser(containerUser())
@@ -94,7 +96,7 @@ class ContainerService(
                     .withBinds(
                         Binds(
                             Bind(installScriptDir.toString(), Volume(installScriptPathInContainer)),
-                            gameFiles(server.id.toString())
+                            gameFiles(server)
                         )
                     )
             )
@@ -143,17 +145,17 @@ class ContainerService(
         log.info("Started existing container $containerId for server $serverId")
     }
 
-    fun ensureGameFilesDirectory(serverId: String): Path {
-        val gameFilesDirectory = gameFilesPath(serverId)
+    fun ensureGameFilesDirectory(server: ServerEntity): Path {
+        val gameFilesDirectory = buildGameFilesHostPath(server)
         Files.createDirectories(gameFilesDirectory)
         return gameFilesDirectory
     }
 
-    private fun gameFiles(serverId: String): Bind =
-        Bind(gameFilesPath(serverId).toString(), Volume(gameserverPathInContainer))
+    private fun gameFiles(server: ServerEntity): Bind =
+        Bind(buildGameFilesHostPath(server).toString(), Volume(gameserverPathInContainer))
 
-    private fun gameFilesPath(serverId: String): Path =
-        properties.gameserverStorage.toAbsolutePath().resolve(serverId, "gameFiles").normalize()
+    private fun buildGameFilesHostPath(server: ServerEntity): Path =
+        environmentProperties.gmStoragePath.toAbsolutePath().resolve(server.podEntity.datasetName, server.id.toString(), "gameFiles").normalize()
 
     private fun containerUser(): String = "${properties.userUid}:${properties.userGid}"
 }

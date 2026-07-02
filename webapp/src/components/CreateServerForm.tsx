@@ -9,6 +9,8 @@ interface CreateServerFields {
   description: string
   cpuPercent: string
   memoryMb: string
+  diskMb: string
+  diskUnlimited: boolean
   glyphId: string
   startCommand: string
   env: { key: string; value: string }[]
@@ -20,6 +22,8 @@ const EMPTY_FORM: CreateServerFields = {
   description: "",
   cpuPercent: "100",
   memoryMb: "1024",
+  diskMb: "10240",
+  diskUnlimited: false,
   glyphId: "",
   startCommand: "",
   env: [],
@@ -120,6 +124,7 @@ export function CreateServerForm({
       description: fields.description || undefined,
       cpuPercent: Number(fields.cpuPercent),
       memoryMb: Number(fields.memoryMb),
+      diskMb: fields.diskUnlimited ? 0 : Number(fields.diskMb),
       glyphId: Number(fields.glyphId),
       startCommand: fields.startCommand || undefined,
       env: { ...glyphEnv, ...customEnv },
@@ -201,7 +206,7 @@ export function CreateServerForm({
           />
         </Field>
 
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <Field label="CPU %" required>
             <input
               className={inputCls}
@@ -221,6 +226,32 @@ export function CreateServerForm({
               onChange={(e) => set("memoryMb", e.target.value)}
               required
             />
+          </Field>
+          <Field label="Disk (MB)">
+            <div className="flex items-center gap-2">
+              <input
+                className={`${inputCls} flex-1`}
+                type="number"
+                min={1}
+                value={fields.diskMb}
+                disabled={fields.diskUnlimited}
+                onChange={(e) => set("diskMb", e.target.value)}
+                required={!fields.diskUnlimited}
+              />
+              <label className="flex items-center gap-1 text-xs whitespace-nowrap text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={fields.diskUnlimited}
+                  onChange={(e) =>
+                    setFields((f) => ({
+                      ...f,
+                      diskUnlimited: e.target.checked,
+                    }))
+                  }
+                />
+                Unlimited
+              </label>
+            </div>
           </Field>
           <Field label="Image" required>
             {selectedGlyph &&

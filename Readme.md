@@ -95,13 +95,17 @@ marked `STOPPED` with their `containerId` cleared.
 
 ## Setup
 
-`sudo zfs allow <username> create,destroy,mount <dataset>`
+`sudo zfs allow <username> create,destroy,mount,quota <dataset>`
 
 Run This command to give your user permissions to create, destroy and mount zfs datasets
 make sure the user running CLU actually have permission to mount stuff
 
 ` echo 'scyed ALL=(root) NOPASSWD: /usr/sbin/zfs' | sudo tee /etc/sudoers.d/scyed-zfs`
 and then in application.properties:
+
+the root dataset needs to be owned by the user running the CLU so new child datasets inherit the owner:
+
+`sudo chown -R scyed:scyed /blink/clu`
 
 ``
 

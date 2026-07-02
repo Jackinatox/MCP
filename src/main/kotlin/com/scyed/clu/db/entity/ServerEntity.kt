@@ -26,6 +26,7 @@ class ServerEntity(
     @Convert(converter = ServerStatusConverter::class) var status: ServerState = ServerState(ServerStatus.PROVISIONING),
     var skip_scripts: Boolean = false,
     var memoryMb: Long,
+    var diskMb: Long,
     var cpuPercent: Long,
     @Column(columnDefinition = "TEXT") // or JSON if your DB supports it
     @Convert(converter = EnvMapConverter::class) var env: Map<String, String> = emptyMap(),

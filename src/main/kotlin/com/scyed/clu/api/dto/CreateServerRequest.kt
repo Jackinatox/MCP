@@ -10,6 +10,7 @@ data class CreateServerRequest(
     val description: String? = null,
     @NotNull var cpuPercent: Long,
     @NotNull var memoryMb: Long,
+    @NotNull var diskMb: Long,
     @NotNull var env: Map<String, String> = emptyMap(),
     @NotNull var glyphId: Long,
     var startCommand: String?,
