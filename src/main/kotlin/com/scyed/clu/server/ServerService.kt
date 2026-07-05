@@ -116,12 +116,12 @@ class ServerService(
         val server = serverRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
         eventPublisher.publishEvent(ServerDeletionStarted(serverId))
-        serverRepository.save(server, server.status.deleting())
+        transitions.deleting(server)
         containerService.removeContainer(server)
 
         zFSManager.destroyServerDataset(server)
 
-        serverRepository.save(server, server.status.deleted())
+        transitions.deleted(server)
         eventPublisher.publishEvent(ServerDeleted(serverId))
     }
 

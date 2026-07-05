@@ -61,7 +61,6 @@ class DockerProvisioner(
 
             server.containerId = null
             transitions.install(server)
-            serverRepository.save(server)
 
             containerService.startContainer(container.id)
             log.info("Started install container: ${container.id}")

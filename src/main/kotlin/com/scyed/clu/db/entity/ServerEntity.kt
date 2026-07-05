@@ -14,6 +14,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.ManyToOne
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import org.springframework.data.domain.AbstractAggregateRoot
 import java.time.Instant
 import java.util.UUID
 
@@ -40,7 +41,7 @@ class ServerEntity(
 
     @CreationTimestamp var createdAt: Instant = Instant.now(),
     @UpdateTimestamp var updatedAt: Instant = Instant.now(),
-) {
+): AbstractAggregateRoot<ServerEntity>() {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null

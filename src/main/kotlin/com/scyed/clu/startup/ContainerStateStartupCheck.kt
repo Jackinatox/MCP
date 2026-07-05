@@ -34,7 +34,6 @@ class ContainerStateStartupCheck(
             val newStatus = resolveStatus(server)
 
             server.containerId = newStatus.cid
-            serverRepository.save(server)
             transitions.force(server, newStatus.state)
             log.info("New container Status: ${newStatus.state} - ${server.id} id: ${server.containerId}")
         }

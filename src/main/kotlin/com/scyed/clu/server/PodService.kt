@@ -58,10 +58,7 @@ class PodService(
         var podId = requireNotNull(pod.id)
         var servers = serverRepository.findByPodEntityId(podEntityId = podId)
         servers.forEach { server ->
-            serverStateTransitions.
-            serverRepository.save(server, server.status.deleting())
-            serverService.deleteServer(server.id)
-            serverRepository.save(server, server.status.deleted())
+            serverService.deleteServer(server.id) // does the state update and saves to the db
         }
         podRepository.delete(pod)
     }
