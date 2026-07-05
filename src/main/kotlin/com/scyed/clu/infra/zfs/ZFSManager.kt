@@ -26,7 +26,9 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
     fun createPodDataset(podEntity: PodEntity): ZFSCommandResult {
         val fullName = buildPodDataset(podEntity)
         log.info("Creating pod dataset '$fullName'")
-        return execute(listOf("create", "-o", "quota=${podEntity.diskMb}m", fullName))
+        val result = execute(listOf("create", "-o", "quota=${podEntity.diskMb}m", fullName))
+        if (result.isSuccess) chownDataset(fullName)
+        return result
     }
 
     fun createServerDataset(server: ServerEntity): ZFSCommandResult {
@@ -39,7 +41,29 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
             add(fullName)
         }
 
-        return execute(newCall)
+        val result = execute(newCall)
+        if (result.isSuccess) chownDataset(fullName)
+        return result
+    }
+
+    /**
+     * `zfs create` mounts the new dataset as root regardless of what's in the process
+     * environment (sudo only honors `-u`/sudoers, not SUDO_UID/SUDO_GID), so the mountpoint
+     * always comes back owned by root. Fix it up explicitly afterwards.
+     */
+    private fun chownDataset(fullName: String) {
+        val mountpoint = execute(listOf("get", "-H", "-o", "value", "mountpoint", fullName)).stdout.trim()
+        if (mountpoint.isBlank() || mountpoint == "none" || mountpoint == "legacy" || mountpoint == "-") {
+            log.warn("Dataset '$fullName' has no mountpoint ('$mountpoint'), skipping chown")
+            return
+        }
+
+        val owner = "${gameserverProperties.userUid}:${gameserverProperties.userGid}"
+        log.info("Chowning '$mountpoint' to $owner")
+        val chown = runCommand(listOf("/usr/bin/sudo", "chown", owner, mountpoint))
+        if (!chown.isSuccess) {
+            log.error("Failed to chown '$mountpoint' to $owner: {}", chown.stderr.trim())
+        }
     }
 
     fun destroyServerDataset(serverEntity: ServerEntity): ZFSCommandResult {
@@ -68,21 +92,15 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
 
 
     private val streamReaderExecutor: ExecutorService = Executors.newVirtualThreadPerTaskExecutor()
-    private fun execute(args: List<String>, timeout: Duration = 10.seconds): ZFSCommandResult {
+    private fun execute(args: List<String>, timeout: Duration = 10.seconds): ZFSCommandResult =
+        runCommand(listOf("/usr/bin/sudo", ep.zfsBinary) + args, timeout)
 
-        val command = listOf("/usr/bin/sudo", ep.zfsBinary) + args
+    private fun runCommand(command: List<String>, timeout: Duration = 10.seconds): ZFSCommandResult {
         log.info("Executing: {}", command.joinToString(" "))
 
         val start = System.nanoTime()
         val process = ProcessBuilder(command)
             .redirectErrorStream(false)
-            .apply {
-                environment().apply {
-                    put("SUDO_UID", gameserverProperties.userUid.toString())
-                    put("SUDO_GID", gameserverProperties.userGid.toString())
-                    put("SUDO_USER", "scyed")
-                }
-            }
             .start()
 
         val stdoutFuture = streamReaderExecutor.submit<String> { drain(process.inputStream) }

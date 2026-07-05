@@ -95,7 +95,7 @@ marked `STOPPED` with their `containerId` cleared.
 
 ## Setup
 
-`sudo zfs allow <username> create,destroy,mount,quota <dataset>`
+`sudo zfs allow <username> create,destroy,mount,canmount,mountpoint quota <dataset>`
 
 Run This command to give your user permissions to create, destroy and mount zfs datasets
 make sure the user running CLU actually have permission to mount stuff

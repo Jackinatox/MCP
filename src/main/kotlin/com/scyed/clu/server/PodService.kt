@@ -3,13 +3,20 @@ package com.scyed.clu.server
 import com.scyed.clu.api.dto.CreatePodRequest
 import com.scyed.clu.db.entity.PodEntity
 import com.scyed.clu.db.repository.PodRepository
+import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.infra.zfs.ZFSManager
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import java.security.SecureRandom
 
 @Service
-class PodService(private val podRepository: PodRepository, private val zfsManager: ZFSManager) {
+class PodService(
+    private val podRepository: PodRepository,
+    private val zfsManager: ZFSManager,
+    private val serverRepository: ServerRepository,
+    private val serverService: ServerService,
+    private val serverStateTransitions: ServerStateTransitions
+) {
     private val log = LoggerFactory.getLogger(javaClass)
 
     fun getAllPods(): Pair<Long, List<PodEntity>> =
@@ -45,6 +52,18 @@ class PodService(private val podRepository: PodRepository, private val zfsManage
         }
 
         return pod
+    }
+
+    fun saveDeletePod(pod: PodEntity) {
+        var podId = requireNotNull(pod.id)
+        var servers = serverRepository.findByPodEntityId(podEntityId = podId)
+        servers.forEach { server ->
+            serverStateTransitions.
+            serverRepository.save(server, server.status.deleting())
+            serverService.deleteServer(server.id)
+            serverRepository.save(server, server.status.deleted())
+        }
+        podRepository.delete(pod)
     }
 
     private fun generateAlphanumericId(length: Int): String {

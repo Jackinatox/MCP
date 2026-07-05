@@ -14,7 +14,6 @@ import com.scyed.clu.provisioning.DockerProvisioner
 import com.scyed.clu.server.event.ServerDeleted
 import com.scyed.clu.server.event.ServerDeletionStarted
 import com.scyed.clu.server.event.ServerReinstallRequested
-import org.apache.commons.io.FileUtils
 import org.slf4j.LoggerFactory
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.http.HttpStatus
@@ -112,8 +111,9 @@ class ServerService(
         }
     }
 
-    fun deleteServer(serverId: UUID) {
-        val server = serverRepository.findById(serverId)
+    fun deleteServer(serverId: UUID?) {
+        val id = requireNotNull(serverId)
+        val server = serverRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
         eventPublisher.publishEvent(ServerDeletionStarted(serverId))
         serverRepository.save(server, server.status.deleting())

@@ -16,6 +16,7 @@ class PodEntity (
     var backups: Int,
     @Column(unique = true)
     var datasetName: String,
+    var status: Boolean = false,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
