@@ -1,7 +1,10 @@
 package com.scyed.clu.db.entity
 
+import com.scyed.clu.db.enums.PodStatus
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.Enumerated
+import jakarta.persistence.EnumType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -16,7 +19,9 @@ class PodEntity (
     var backups: Int,
     @Column(unique = true)
     var datasetName: String,
-    var status: Boolean = false,
+    @Enumerated(EnumType.STRING)
+    // Later migrate to actual enums, this is just a varchar
+    var status: PodStatus = PodStatus.ACTIVE,
 ) {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

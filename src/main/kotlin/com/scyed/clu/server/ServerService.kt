@@ -113,16 +113,16 @@ class ServerService(
 
     fun deleteServer(serverId: UUID?) {
         val id = requireNotNull(serverId)
-        val server = serverRepository.findById(id)
+        var server = serverRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Server with ID $serverId not found") }
-        eventPublisher.publishEvent(ServerDeletionStarted(serverId))
-        transitions.deleting(server)
+        eventPublisher.publishEvent(ServerDeletionStarted(serverId)) // TODO: event bus insid etransitions already does that
+        server = transitions.deleting(server)
         containerService.removeContainer(server)
 
         zFSManager.destroyServerDataset(server)
 
-        transitions.deleted(server)
-        eventPublisher.publishEvent(ServerDeleted(serverId))
+        server = transitions.deleted(server)
+        eventPublisher.publishEvent(ServerDeleted(serverId)) // TODO: event bus insid etransitions already does that
     }
 
     private fun stopServer(server: ServerEntity) {

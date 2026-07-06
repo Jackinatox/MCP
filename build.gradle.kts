@@ -29,6 +29,8 @@ dependencies {
     implementation("org.springframework:spring-messaging")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("tools.jackson.module:jackson-module-kotlin")
+
+    implementation("org.postgresql:postgresql:42.7.3")
     implementation("com.github.docker-java:docker-java-core:3.7.1")
     implementation("com.github.docker-java:docker-java-transport-httpclient5:3.7.1")
     implementation("org.springframework.boot:spring-boot-h2console")

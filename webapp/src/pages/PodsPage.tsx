@@ -73,7 +73,9 @@ export function PodsPage() {
         <div className="py-8 text-center text-sm text-muted-foreground">No pods found.</div>
       )}
 
-      {data?.pods.map((p) => <PodCard key={p.id} pod={p} />)}
+      {data?.pods.map((p) => (
+        <PodCard key={p.id} pod={p} onDeleted={fetchPods} />
+      ))}
     </div>
   )
 }

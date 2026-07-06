@@ -2,6 +2,7 @@ package com.scyed.clu.server
 
 import com.scyed.clu.api.dto.CreatePodRequest
 import com.scyed.clu.db.entity.PodEntity
+import com.scyed.clu.db.enums.PodStatus
 import com.scyed.clu.db.repository.PodRepository
 import com.scyed.clu.db.repository.ServerRepository
 import com.scyed.clu.infra.zfs.ZFSManager
@@ -57,10 +58,18 @@ class PodService(
     fun saveDeletePod(pod: PodEntity) {
         var podId = requireNotNull(pod.id)
         var servers = serverRepository.findByPodEntityId(podEntityId = podId)
+        pod.status = PodStatus.DELETING
+        podRepository.save(pod)
         servers.forEach { server ->
-            serverService.deleteServer(server.id) // does the state update and saves to the db
+            try {
+                serverService.deleteServer(server.id) // does the state update and saves to the db
+            } catch (e: Exception) {
+                log.error("Failed to delete server during pod deletion ${server.id} MANUAL ACTION REQUIRED")
+            }
         }
-        podRepository.delete(pod)
+        zfsManager.destroyPodDataset()
+        pod.status = PodStatus.DELETED
+        podRepository.save(pod)
     }
 
     private fun generateAlphanumericId(length: Int): String {

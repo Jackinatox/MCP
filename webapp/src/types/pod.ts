@@ -4,6 +4,7 @@ export interface PodEntity {
   memoryMb: number
   diskMb: number
   backups: number
+  status: "ACTIVE" | "DELETING" | "DELETED"
 }
 
 export interface PodResponse {

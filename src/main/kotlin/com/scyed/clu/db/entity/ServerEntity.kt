@@ -18,6 +18,9 @@ import org.springframework.data.domain.AbstractAggregateRoot
 import java.time.Instant
 import java.util.UUID
 
+// TODO: check enum creation in postgres server if @enumertaed.oridnal would create an enum type and set up enum for pod state to mark the pod as deleted
+
+
 @Entity
 class ServerEntity(
     @Column(unique = true) var name: String,
