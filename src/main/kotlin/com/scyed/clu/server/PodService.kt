@@ -67,7 +67,7 @@ class PodService(
                 log.error("Failed to delete server during pod deletion ${server.id} MANUAL ACTION REQUIRED")
             }
         }
-        zfsManager.destroyPodDataset()
+        zfsManager.destroyPodDataset(pod)
         pod.status = PodStatus.DELETED
         podRepository.save(pod)
     }

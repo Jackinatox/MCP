@@ -3,8 +3,9 @@ import { Box, ChevronRight, Cpu, HardDrive, MemoryStick, Archive, Plus, Trash2 }
 import { toast } from "sonner"
 import { ServerCard } from "@/components/ServerCard"
 import { CreateServerForm } from "@/components/CreateServerForm"
+import { StatusBadge } from "@/components/StatusBadge"
 import { Button } from "@/components/ui/button"
-import type { PodEntity } from "@/types/pod"
+import { POD_STATUS_COLORS, type PodEntity } from "@/types/pod"
 import type { ServerResponse } from "@/types/server"
 
 interface DeleteError {
@@ -43,6 +44,8 @@ export function PodCard({
   useEffect(() => {
     if (open && !data && !loading) fetchServers()
   }, [open, data, loading, fetchServers])
+
+  const podActive = pod.status === "ACTIVE"
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -98,9 +101,10 @@ export function PodCard({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          <StatusBadge status={pod.status} colorClass={POD_STATUS_COLORS[pod.status]} />
           <button
             onClick={handleDelete}
-            disabled={deleting}
+            disabled={deleting || !podActive}
             className="rounded p-1 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
           >
             <Trash2 className="h-4 w-4" />
@@ -114,12 +118,17 @@ export function PodCard({
       {open && (
         <div className="flex flex-col gap-2 border-t p-3">
           <div className="flex justify-end">
-            <Button size="sm" onClick={() => setCreating(true)} disabled={creating}>
+            <Button
+              size="sm"
+              onClick={() => setCreating(true)}
+              disabled={creating || !podActive}
+              title={podActive ? undefined : `Pod is ${pod.status.toLowerCase()}`}
+            >
               <Plus className="mr-1 h-3.5 w-3.5" /> New server
             </Button>
           </div>
 
-          {creating && (
+          {creating && podActive && (
             <CreateServerForm
               podId={pod.id}
               onCreated={() => {

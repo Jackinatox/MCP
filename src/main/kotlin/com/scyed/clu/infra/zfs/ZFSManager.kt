@@ -31,6 +31,15 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
         return result
     }
 
+    fun destroyPodDataset(podEntity: PodEntity): ZFSCommandResult {
+        val fullName = buildPodDataset(podEntity)
+        log.info("Destroying pod dataset '$fullName'")
+        val result = execute(listOf("destroy", fullName))
+        if (result.isSuccess) return result
+        log.warn("Soft deletion for dataset '$fullName' failed, using force")
+        return execute(listOf("destroy", "-f", "-r", fullName))
+    }
+
     fun createServerDataset(server: ServerEntity): ZFSCommandResult {
         val fullName = buildServerDatasetName(server)
         log.info("Create server dataset '$fullName'")

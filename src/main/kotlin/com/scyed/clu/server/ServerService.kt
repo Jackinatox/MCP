@@ -2,6 +2,7 @@ package com.scyed.clu.server
 
 import com.scyed.clu.api.dto.CreateServerRequest
 import com.scyed.clu.db.entity.ServerEntity
+import com.scyed.clu.db.enums.PodStatus
 import com.scyed.clu.db.enums.ServerStatus
 import com.scyed.clu.glyph.GlyphEnvVarValidator
 import com.scyed.clu.db.repository.GlyphRepository
@@ -51,6 +52,10 @@ class ServerService(
         val pod = podRepository.findById(request.podId).orElseThrow {
             ResponseStatusException(HttpStatus.BAD_REQUEST, "Pod not found")
         }
+
+        if (pod.status != PodStatus.ACTIVE) throw ResponseStatusException(
+            HttpStatus.CONFLICT, "Cannot create server: pod is ${pod.status}"
+        )
 
         try {
             glyphEnvVarValidator.validate(glyph.envVars, request.env)

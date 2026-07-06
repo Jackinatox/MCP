@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useNavigate } from "react-router"
 import { Server, ChevronRight, Trash2 } from "lucide-react"
 import { StatusBadge } from "@/components/StatusBadge"
-import type { ServerEntity } from "@/types/server"
+import { STATUS_COLORS, type ServerEntity } from "@/types/server"
 
 interface DeleteError {
   status: number
@@ -57,7 +57,10 @@ export function ServerCard({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StatusBadge status={server.status} />
+            <StatusBadge
+              status={server.status}
+              colorClass={STATUS_COLORS[server.status]}
+            />
             <button
               onClick={handleDelete}
               disabled={deleting}

@@ -4,7 +4,7 @@ import { ArrowLeft, Server, RefreshCw } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ButtonGroup } from "@/components/ui/button-group"
 import { StatusBadge } from "@/components/StatusBadge"
-import type { ServerEntity, ServerResponse } from "@/types/server"
+import { STATUS_COLORS, type ServerEntity, type ServerResponse } from "@/types/server"
 import { toast } from "sonner"
 
 export function ServerDetailPage() {
@@ -182,7 +182,10 @@ export function ServerDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <StatusBadge status={server.status} />
+            <StatusBadge
+              status={server.status}
+              colorClass={STATUS_COLORS[server.status]}
+            />
             <Button
               variant="ghost"
               size="sm"
