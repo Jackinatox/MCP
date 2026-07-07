@@ -1,5 +1,6 @@
 package com.scyed.clu.infra.zfs
 
+import com.scyed.clu.db.entity.BackupEntity
 import com.scyed.clu.db.entity.PodEntity
 import com.scyed.clu.db.entity.ServerEntity
 import com.scyed.clu.infra.properrties.EnvironmentProperties
@@ -22,6 +23,12 @@ import kotlin.time.DurationUnit
 class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties: GameserverProperties) {
     private val log = LoggerFactory.getLogger(javaClass)
 
+    fun createSnapshot(backup: BackupEntity) {
+        val fullName = buildServerDatasetName(backup.server)
+        log.info("Creating snapshot of dataset '$fullName'")
+        val result = execute(listOf("snapshot", fullName + "@${backup.snapshotName}"))
+        if (result.isSuccess) chownDataset(fullName)
+    }
 
     fun createPodDataset(podEntity: PodEntity): ZFSCommandResult {
         val fullName = buildPodDataset(podEntity)
@@ -34,7 +41,7 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
     fun destroyPodDataset(podEntity: PodEntity): ZFSCommandResult {
         val fullName = buildPodDataset(podEntity)
         log.info("Destroying pod dataset '$fullName'")
-        val result = execute(listOf("destroy", fullName))
+        val result = execute(listOf("destroy", "-r", fullName))
         if (result.isSuccess) return result
         log.warn("Soft deletion for dataset '$fullName' failed, using force")
         return execute(listOf("destroy", "-f", "-r", fullName))
@@ -78,12 +85,12 @@ class ZFSManager(val ep: EnvironmentProperties, private val gameserverProperties
     fun destroyServerDataset(serverEntity: ServerEntity): ZFSCommandResult {
         val fullName = buildServerDatasetName(serverEntity)
         log.info("Destroying server dataset '$fullName'")
-        val softDelete = execute(listOf("destroy", "-f", fullName))
+        val softDelete = execute(listOf("destroy", "-r", fullName))
 
         if (softDelete.isSuccess) return softDelete
         log.warn("Soft deletion for dataset '$fullName' failed, using force")
 
-        return execute(listOf("destroy", "-f", fullName))
+        return execute(listOf("destroy", "-f", "-r", fullName))
     }
 
     private fun buildServerDatasetName(serverEntity: ServerEntity): String =
